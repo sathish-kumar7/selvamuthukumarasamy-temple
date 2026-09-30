@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/current-user";
 import { prisma } from "@/lib/db";
-import { formatDateTime } from "@/lib/dates";
+import { formatDateTime, formatDonationDate } from "@/lib/dates";
+import { cn } from "@/lib/cn";
 import { PageHeader } from "@/components/ui/page-header";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +25,39 @@ export default async function UsersPage(props: PageProps<"/users">) {
       {searchParams.updated ? <Alert tone="success" className="mb-4">User updated.</Alert> : null}
 
       <TableWrapper>
-        <Table>
+        <ul className="divide-y divide-stone-100 md:hidden">
+          {users.map((u) => (
+            <li key={u.id} className={cn("px-4 py-3", !u.active && "bg-stone-50")}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className={cn("truncate font-medium", u.active ? "text-stone-900" : "text-stone-400")}>
+                    {u.name}
+                    {u.id === admin.id ? <span className="ml-2 text-xs font-normal text-stone-500">(you)</span> : null}
+                  </p>
+                  <p className="truncate text-xs text-stone-500">{u.email}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <Badge tone={u.role === "ADMIN" ? "brand" : "neutral"}>{u.role === "ADMIN" ? "Admin" : "Staff"}</Badge>
+                  {u.active ? <Badge tone="success">Active</Badge> : <Badge tone="danger">Deactivated</Badge>}
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-stone-500">
+                  {u._count.donationsCreated} donation{u._count.donationsCreated === 1 ? "" : "s"} · added {formatDonationDate(u.createdAt)}
+                </p>
+                <div className="flex flex-wrap items-center gap-1">
+                  <EditUserDialog user={u} isSelf={u.id === admin.id} />
+                  <ResetPasswordDialog user={u} />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <Table className="hidden md:table">
           <thead>
             <tr>
               <Th>Name</Th>
-              <Th className="hidden sm:table-cell">Email</Th>
+              <Th className="hidden lg:table-cell">Email</Th>
               <Th>Role</Th>
               <Th>Status</Th>
               <Th className="hidden text-right md:table-cell">Donations</Th>
@@ -42,9 +71,9 @@ export default async function UsersPage(props: PageProps<"/users">) {
                 <Td>
                   <span className="font-medium text-stone-900">{u.name}</span>
                   {u.id === admin.id ? <span className="ml-2 text-xs text-stone-500">(you)</span> : null}
-                  <span className="block text-xs text-stone-500 sm:hidden">{u.email}</span>
+                  <span className="block text-xs text-stone-500 lg:hidden">{u.email}</span>
                 </Td>
-                <Td className="hidden sm:table-cell">{u.email}</Td>
+                <Td className="hidden lg:table-cell">{u.email}</Td>
                 <Td>
                   <Badge tone={u.role === "ADMIN" ? "brand" : "neutral"}>{u.role === "ADMIN" ? "Admin" : "Staff"}</Badge>
                 </Td>

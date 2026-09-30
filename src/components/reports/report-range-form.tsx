@@ -26,7 +26,7 @@ export function ReportRangeForm({ range }: { range: ReportRange }) {
             </Link>
           ))}
         </div>
-        <form method="get" action="/reports" className="flex flex-wrap items-end gap-3">
+        <form method="get" action="/reports" className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
           <input type="hidden" name="preset" value="custom" />
           <div>
             <Label htmlFor="from">From</Label>
@@ -36,7 +36,7 @@ export function ReportRangeForm({ range }: { range: ReportRange }) {
             <Label htmlFor="to">To</Label>
             <Input id="to" name="to" type="date" defaultValue={range.to} required className="h-11" />
           </div>
-          <Button type="submit" variant={range.preset === "custom" ? "primary" : "secondary"}>
+          <Button type="submit" variant={range.preset === "custom" ? "primary" : "secondary"} className="col-span-2 sm:col-span-1">
             Apply range
           </Button>
         </form>

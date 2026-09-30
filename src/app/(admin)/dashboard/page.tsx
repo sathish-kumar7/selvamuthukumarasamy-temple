@@ -40,7 +40,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
         </Alert>
       ) : null}
 
-      <section aria-label="Today" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section aria-label="Today" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard label="Today's donations" value={formatINR(stats.todayTotal)} sub={`${stats.todayCount} receipt${stats.todayCount === 1 ? "" : "s"} today`} icon={<IndianRupee className="size-5" aria-hidden />} accent />
         <StatCard label="This month" value={formatINR(stats.monthTotal)} sub={`${stats.monthCount} receipt${stats.monthCount === 1 ? "" : "s"} this month`} icon={<CalendarDays className="size-5" aria-hidden />} />
         <StatCard label="Donations today" value={String(stats.todayCount)} sub="Active receipts issued" icon={<ReceiptText className="size-5" aria-hidden />} />

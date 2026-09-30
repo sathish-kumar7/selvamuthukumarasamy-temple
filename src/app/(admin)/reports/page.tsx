@@ -52,7 +52,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
         <ReportRangeForm range={range} />
         {rangeError ? <Alert tone="error">{rangeError}</Alert> : null}
 
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           <StatCard label="Total donations" value={formatINR(summary.total)} sub={`${summary.count} receipt${summary.count === 1 ? "" : "s"}`} accent />
           <StatCard label="Number of donations" value={String(summary.count)} />
           {(["CASH", "UPI", "BANK_TRANSFER", "CHEQUE", "OTHER"] as PaymentMethod[]).map((m) => (
@@ -106,48 +106,77 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
             {transactions.length === 0 ? (
               <EmptyState title="No transactions" description="No active donations were recorded in this period." />
             ) : (
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>Receipt</Th>
-                    <Th>Date</Th>
-                    <Th>Donor</Th>
-                    <Th className="hidden md:table-cell">Mobile</Th>
-                    <Th className="hidden lg:table-cell">Category</Th>
-                    <Th className="hidden sm:table-cell">Payment</Th>
-                    <Th className="hidden xl:table-cell">Reference</Th>
-                    <Th className="text-right">Amount</Th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
+              <>
+                <ul className="divide-y divide-stone-100 md:hidden">
                   {transactions.map((d) => (
-                    <tr key={d.id} className="hover:bg-stone-50">
-                      <Td>
-                        <Link href={`/donations/${d.id}`} className="font-mono text-saffron-800 hover:underline">
-                          {d.receiptNumber}
-                        </Link>
-                      </Td>
-                      <Td className="whitespace-nowrap">{formatDonationDate(d.donationDate)}</Td>
-                      <Td className="max-w-[14rem] truncate font-medium">{d.donor.name}</Td>
-                      <Td className="hidden font-mono text-xs md:table-cell">{d.donor.mobile}</Td>
-                      <Td className="hidden lg:table-cell">{d.category.name}</Td>
-                      <Td className="hidden sm:table-cell">
+                    <li key={d.id} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link href={`/donations/${d.id}`} className="font-mono text-sm font-semibold text-saffron-800 hover:underline">
+                            {d.receiptNumber}
+                          </Link>
+                          <p className="mt-0.5 truncate font-medium text-stone-900">{d.donor.name}</p>
+                          <p className="text-xs text-stone-500">
+                            {d.donor.mobile} · {formatDonationDate(d.donationDate)}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-lg font-semibold tabular-nums text-stone-900">{formatINR(d.amount)}</p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <PaymentMethodBadge method={d.paymentMethod} />
-                      </Td>
-                      <Td className="hidden max-w-[10rem] truncate font-mono text-xs text-stone-500 xl:table-cell">{d.transactionReference ?? "—"}</Td>
-                      <Td className="text-right font-semibold tabular-nums whitespace-nowrap">{formatINR(d.amount)}</Td>
-                    </tr>
+                        <span className="text-xs text-stone-600">{d.category.name}</span>
+                        {d.transactionReference ? <span className="font-mono text-xs text-stone-500">Ref: {d.transactionReference}</span> : null}
+                      </div>
+                    </li>
                   ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-stone-50 font-semibold">
-                    <Td colSpan={7} className="text-right text-stone-600">
-                      Total ({summary.count})
-                    </Td>
-                    <Td className="text-right tabular-nums">{formatINR(summary.total)}</Td>
-                  </tr>
-                </tfoot>
-              </Table>
+                  <li className="flex items-center justify-between bg-stone-50 px-4 py-3 font-semibold">
+                    <span className="text-stone-600">Total ({summary.count})</span>
+                    <span className="tabular-nums">{formatINR(summary.total)}</span>
+                  </li>
+                </ul>
+                <Table className="hidden md:table">
+                  <thead>
+                    <tr>
+                      <Th>Receipt</Th>
+                      <Th>Date</Th>
+                      <Th>Donor</Th>
+                      <Th className="hidden lg:table-cell">Mobile</Th>
+                      <Th className="hidden lg:table-cell">Category</Th>
+                      <Th>Payment</Th>
+                      <Th className="hidden xl:table-cell">Reference</Th>
+                      <Th className="text-right">Amount</Th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {transactions.map((d) => (
+                      <tr key={d.id} className="hover:bg-stone-50">
+                        <Td>
+                          <Link href={`/donations/${d.id}`} className="font-mono text-saffron-800 hover:underline">
+                            {d.receiptNumber}
+                          </Link>
+                        </Td>
+                        <Td className="whitespace-nowrap">{formatDonationDate(d.donationDate)}</Td>
+                        <Td className="max-w-[14rem] truncate font-medium">{d.donor.name}</Td>
+                        <Td className="hidden font-mono text-xs lg:table-cell">{d.donor.mobile}</Td>
+                        <Td className="hidden lg:table-cell">{d.category.name}</Td>
+                        <Td>
+                          <PaymentMethodBadge method={d.paymentMethod} />
+                        </Td>
+                        <Td className="hidden max-w-[10rem] truncate font-mono text-xs text-stone-500 xl:table-cell">{d.transactionReference ?? "—"}</Td>
+                        <Td className="text-right font-semibold tabular-nums whitespace-nowrap">{formatINR(d.amount)}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-stone-50 font-semibold">
+                      <Td colSpan={7} className="text-right text-stone-600">
+                        Total ({summary.count})
+                      </Td>
+                      <Td className="text-right tabular-nums">{formatINR(summary.total)}</Td>
+                    </tr>
+                  </tfoot>
+                </Table>
+              </>
             )}
           </TableWrapper>
         </section>
