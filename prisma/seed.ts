@@ -39,6 +39,9 @@ async function main() {
     throw new Error("SEED_ADMIN_PASSWORD must be set and at least 10 characters. It is never stored in the repository.");
   }
 
+  // Print the target host (never the credentials) so it is obvious which database is being seeded.
+  console.log(`Seeding database at ${new URL(connectionString).host}`);
+
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
   try {
     const existing = await prisma.user.findUnique({ where: { email } });
