@@ -1,0 +1,81 @@
+/**
+ * Seed script: creates the initial ADMIN user, default donation categories and
+ * the temple settings row.
+ *
+ * The admin password is NEVER hardcoded. Provide it via environment variables:
+ *
+ *   SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD='a-strong-password' npm run db:seed
+ *
+ * Re-running is safe: existing users/categories are left untouched (the admin
+ * password is not reset unless SEED_ADMIN_RESET_PASSWORD=true).
+ */
+import "dotenv/config";
+import bcrypt from "bcryptjs";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const DEFAULT_CATEGORIES = [
+  "General Donation",
+  "Annadhanam",
+  "Festival",
+  "Abhishekam",
+  "Temple Maintenance",
+  "Special Pooja",
+  "Other",
+];
+
+async function main() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("DATABASE_URL is required");
+
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  const name = process.env.SEED_ADMIN_NAME?.trim() || "Temple Administrator";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("SEED_ADMIN_EMAIL must be a valid email address");
+  }
+  if (!password || password.length < 10) {
+    throw new Error("SEED_ADMIN_PASSWORD must be set and at least 10 characters. It is never stored in the repository.");
+  }
+
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    const passwordHash = await bcrypt.hash(password, 12);
+    if (!existing) {
+      await prisma.user.create({ data: { name, email, role: "ADMIN", passwordHash, active: true } });
+      console.log(`Created ADMIN user ${email}`);
+    } else if (process.env.SEED_ADMIN_RESET_PASSWORD === "true") {
+      await prisma.user.update({ where: { email }, data: { passwordHash, active: true, role: "ADMIN" } });
+      console.log(`Reset password for existing user ${email}`);
+    } else {
+      console.log(`Admin user ${email} already exists; skipping (set SEED_ADMIN_RESET_PASSWORD=true to reset the password)`);
+    }
+
+    let created = 0;
+    for (const [index, categoryName] of DEFAULT_CATEGORIES.entries()) {
+      const result = await prisma.donationCategory.upsert({
+        where: { name: categoryName },
+        update: {},
+        create: { name: categoryName, sortOrder: index + 1, active: true },
+      });
+      if (result.createdAt.getTime() > Date.now() - 5000) created += 1;
+    }
+    console.log(`Donation categories ready (${created} created, ${DEFAULT_CATEGORIES.length - created} already existed)`);
+
+    await prisma.templeSettings.upsert({
+      where: { id: 1 },
+      update: {},
+      create: { id: 1, website: "selvamuthukumarasamy.in" },
+    });
+    console.log("Temple settings ready");
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+main().catch((error) => {
+  console.error("Seed failed:", error instanceof Error ? error.message : error);
+  process.exit(1);
+});

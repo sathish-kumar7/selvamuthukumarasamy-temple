@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Temple-inspired but restrained: saffron primary, maroon accent. */
+  --color-saffron-50: #fff8ed;
+  --color-saffron-100: #ffefd3;
+  --color-saffron-200: #fedba6;
+  --color-saffron-300: #fdc16e;
+  --color-saffron-400: #fb9c34;
+  --color-saffron-500: #f97f0d;
+  --color-saffron-600: #e56303;
+  --color-saffron-700: #bd4a06;
+  --color-saffron-800: #963a0c;
+  --color-saffron-900: #79320d;
+  --color-saffron-950: #411704;
+
+  --color-maroon-50: #fdf2f4;
+  --color-maroon-100: #fbe6ea;
+  --color-maroon-200: #f6d0d8;
+  --color-maroon-300: #efa9b8;
+  --color-maroon-400: #e57892;
+  --color-maroon-500: #d64d70;
+  --color-maroon-600: #c02d5a;
+  --color-maroon-700: #a1204a;
+  --color-maroon-800: #871d43;
+  --color-maroon-900: #741c3e;
+  --color-maroon-950: #400b1e;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background-color: var(--color-stone-50);
+  color: var(--color-stone-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Larger touch targets and readable defaults for temple staff on tablets. */
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-hidden {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-receipt {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  a[href]::after {
+    content: none !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

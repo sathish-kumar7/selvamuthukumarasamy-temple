@@ -1,0 +1,163 @@
+// Prisma schema for Selva Muthukumarasamy Temple Donation Management.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+  OTHER
+}
+
+enum DonationStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  DONATION_CREATED
+  DONATION_UPDATED
+  DONATION_CANCELLED
+  USER_CREATED
+  USER_UPDATED
+  USER_PASSWORD_RESET
+  CATEGORY_CREATED
+  CATEGORY_UPDATED
+  SETTINGS_UPDATED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  donationsCreated   Donation[] @relation("DonationCreatedBy")
+  donationsCancelled Donation[] @relation("DonationCancelledBy")
+  donationsUpdated   Donation[] @relation("DonationUpdatedBy")
+  auditLogs          AuditLog[]
+}
+
+model Donor {
+  id        String   @id @default(cuid())
+  name      String
+  mobile    String
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  donations Donation[]
+
+  @@index([mobile])
+  @@index([name])
+}
+
+model DonationCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  donations Donation[]
+}
+
+model Donation {
+  id                   String         @id @default(cuid())
+  receiptNumber        String         @unique
+  donorId              String
+  donor                Donor          @relation(fields: [donorId], references: [id])
+  /// Monetary amount in INR. Decimal avoids floating point errors.
+  amount               Decimal        @db.Decimal(12, 2)
+  categoryId           String
+  category             DonationCategory @relation(fields: [categoryId], references: [id])
+  paymentMethod        PaymentMethod
+  transactionReference String?
+  /// Calendar date of the donation (no time component).
+  donationDate         DateTime       @db.Date
+  notes                String?
+  status               DonationStatus @default(ACTIVE)
+  /// Secure random token used for the public receipt URL. Never sequential.
+  publicReceiptToken   String         @unique
+
+  createdById String
+  createdBy   User   @relation("DonationCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("DonationUpdatedBy", fields: [updatedById], references: [id])
+
+  cancelledAt        DateTime?
+  cancelledById      String?
+  cancelledBy        User?     @relation("DonationCancelledBy", fields: [cancelledById], references: [id])
+  cancellationReason String?
+
+  @@index([donationDate])
+  @@index([status])
+  @@index([paymentMethod])
+  @@index([categoryId])
+  @@index([donorId])
+  @@index([createdAt])
+}
+
+/// One row per year. Receipt numbers are allocated atomically with
+/// INSERT ... ON CONFLICT DO UPDATE ... RETURNING inside the donation transaction.
+model ReceiptSequence {
+  year       Int      @id
+  lastNumber Int      @default(0)
+  updatedAt  DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  action     AuditAction
+  entityType String
+  entityId   String?
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id])
+  /// Free-form details: before/after snapshots, reason, email attempted, etc.
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+/// Singleton row (id = 1) holding temple details printed on receipts.
+model TempleSettings {
+  id                   Int      @id @default(1)
+  templeName           String   @default("Selva Muthukumarasamy Temple")
+  addressLine1         String?
+  addressLine2         String?
+  phone                String?
+  email                String?
+  website              String?
+  receiptPrefix        String   @default("SMT")
+  thankYouMessage      String   @default("Thank you for your generous donation. May the blessings of Lord Muthukumarasamy be with you and your family.")
+  authorizedSignatory  String   @default("Authorized Signatory")
+  updatedAt            DateTime @updatedAt
+}
