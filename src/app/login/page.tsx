@@ -36,7 +36,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
         className="relative flex min-h-[28rem] shrink-0 flex-col items-center justify-end overflow-hidden bg-maroon-950 px-4 pb-8 pt-10 text-center text-white sm:min-h-[32rem] lg:min-h-screen lg:w-1/2 lg:pb-12"
       >
         {hasHero ? (
-          <Image src={BRANDING.heroImage} alt="" fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover object-top" />
+          <Image src={BRANDING.heroImage} alt="" fill priority unoptimized className="object-cover object-top" />
         ) : (
           <div
             aria-hidden
@@ -46,8 +46,8 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </div>
         )}
         {/* Overlay for legibility */}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-maroon-950/5 via-maroon-950/30 via-45% to-maroon-950/90" />
-        <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_rgba(255,255,255,0.12),_transparent_60%)]" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-transparent via-maroon-950/15 via-50% to-maroon-950/85" />
+        
 
         <div className="relative z-10 flex flex-col items-center px-6 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
           <div className="hidden size-20 items-center justify-center overflow-hidden rounded-full border-2 border-saffron-300/80 lg:flex bg-maroon-900/80 shadow-[0_0_40px_rgba(249,127,13,0.35)] sm:size-24">
