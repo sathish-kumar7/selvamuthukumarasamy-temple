@@ -5,7 +5,6 @@ import path from "node:path";
 import { Noto_Sans_Tamil } from "next/font/google";
 import { LoginForm } from "./login-form";
 import { TempleMark } from "@/components/layout/temple-mark";
-import { getTempleSettings } from "@/lib/settings";
 import { BRANDING } from "@/lib/branding";
 import { cn } from "@/lib/cn";
 
@@ -20,7 +19,6 @@ function publicFileExists(publicPath: string): boolean {
 export default async function LoginPage(props: PageProps<"/login">) {
   const searchParams = await props.searchParams;
   const next = typeof searchParams.next === "string" ? searchParams.next : undefined;
-  const settings = await getTempleSettings();
   const hasHero = publicFileExists(BRANDING.heroImage);
   const hasLogo = publicFileExists(BRANDING.logoImage);
 
@@ -66,10 +64,6 @@ export default async function LoginPage(props: PageProps<"/login">) {
             <span className="block text-2xl sm:text-3xl lg:text-4xl">{BRANDING.nameLine2Tamil}</span>
           </h1>
           <p className={cn(tamil.className, "mt-2 text-base font-bold text-saffron-200 sm:text-lg lg:text-xl")}>{BRANDING.locationTamil}</p>
-          <p className="mt-3 text-xs text-white/80 sm:text-sm">
-            {settings.templeName} · {BRANDING.tagline}
-          </p>
-          <p className={cn(tamil.className, "mt-6 hidden text-sm text-white/75 lg:block")}>{BRANDING.quoteTamil}</p>
         </div>
       </section>
 
