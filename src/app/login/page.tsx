@@ -9,7 +9,7 @@ import { getTempleSettings } from "@/lib/settings";
 import { BRANDING } from "@/lib/branding";
 import { cn } from "@/lib/cn";
 
-const tamil = Noto_Sans_Tamil({ subsets: ["tamil"], weight: ["500", "700"], display: "swap" });
+const tamil = Noto_Sans_Tamil({ subsets: ["tamil"], weight: ["500", "700", "800"], display: "swap" });
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -55,11 +55,18 @@ export default async function LoginPage(props: PageProps<"/login">) {
           <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border-2 border-saffron-300/80 bg-maroon-900/80 shadow-[0_0_40px_rgba(249,127,13,0.35)] sm:size-24">
             {logo}
           </div>
-          <h1 className={cn(tamil.className, "mt-4 text-2xl font-bold leading-snug drop-shadow sm:text-3xl lg:text-4xl")}>
-            {BRANDING.templeNameTamil}
+          <p className={cn(tamil.className, "mt-4 text-sm font-medium tracking-wide text-saffron-200 sm:text-base")}>{BRANDING.invocationTamil}</p>
+          <p className={cn(tamil.className, "mt-2 text-base font-medium text-white/90 sm:text-lg")}>
+            <span aria-hidden className="mr-2 text-saffron-300">✦</span>
+            {BRANDING.prefixTamil}
+            <span aria-hidden className="ml-2 text-saffron-300">✦</span>
+          </p>
+          <h1 className={cn(tamil.className, "mt-1 font-bold leading-snug drop-shadow")}>
+            <span className="block text-xl sm:text-2xl lg:text-3xl">{BRANDING.nameLine1Tamil}</span>
+            <span className="block text-2xl sm:text-3xl lg:text-4xl">{BRANDING.nameLine2Tamil}</span>
           </h1>
-          <p className={cn(tamil.className, "mt-1 text-sm font-medium text-saffron-200 sm:text-base lg:text-lg")}>{BRANDING.subtitleTamil}</p>
-          <p className="mt-2 text-xs text-white/85 sm:text-sm lg:text-base">
+          <p className={cn(tamil.className, "mt-2 text-base font-bold text-saffron-200 sm:text-lg lg:text-xl")}>{BRANDING.locationTamil}</p>
+          <p className="mt-3 text-xs text-white/80 sm:text-sm">
             {settings.templeName} · {BRANDING.tagline}
           </p>
         </div>

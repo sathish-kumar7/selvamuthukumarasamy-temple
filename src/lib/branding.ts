@@ -1,12 +1,19 @@
 /**
  * Static branding used on the sign-in page. Temple details that print on
  * receipts live in the database (Settings page); these are visual extras.
+ * Wording follows the temple's official banner.
  */
 export const BRANDING = {
-  /** Temple name in Tamil, shown as the hero heading. */
-  templeNameTamil: "செல்வ முத்துக்குமாரசாமி திருக்கோவில்",
-  /** Second line under the Tamil heading (location / trust name). */
-  subtitleTamil: "அருள்மிகு செல்வ முத்துக்குமாரசாமி",
+  /** Invocation shown above the name. */
+  invocationTamil: "॥ ஓம் சரவணபவ ॥",
+  /** Honorific prefix. */
+  prefixTamil: "அருள்மிகு",
+  /** Temple name, line 1 (consorts). */
+  nameLine1Tamil: "வள்ளி தெய்வானை உடனமர்",
+  /** Temple name, line 2 (main deity). */
+  nameLine2Tamil: "செல்வமுத்துகுமார சுவாமி திருக்கோவில்",
+  /** Location line. */
+  locationTamil: "கோண வாய்க்கால் பாளையம்",
   /** English tagline. */
   tagline: "Donation and receipt management",
   /** Quote shown at the bottom of the hero panel. */
