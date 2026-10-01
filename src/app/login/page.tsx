@@ -48,7 +48,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </div>
         )}
         {/* Overlay for legibility */}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-maroon-950/55 via-maroon-950/60 to-maroon-950/90" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-maroon-950/30 via-maroon-950/45 to-maroon-950/85" />
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_rgba(255,255,255,0.12),_transparent_60%)]" />
 
         <div className="relative z-10 flex flex-col items-center px-6">
