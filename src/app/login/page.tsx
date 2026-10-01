@@ -35,7 +35,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
       {/* Hero panel */}
       <section
         aria-label="Temple"
-        className="relative flex min-h-72 shrink-0 flex-col items-center justify-center overflow-hidden bg-maroon-950 px-4 py-10 text-center text-white sm:min-h-80 lg:min-h-screen lg:w-1/2 lg:py-16"
+        className="relative flex min-h-[28rem] shrink-0 flex-col items-center justify-end overflow-hidden bg-maroon-950 px-4 pb-8 pt-10 text-center text-white sm:min-h-[32rem] lg:min-h-screen lg:w-1/2 lg:pb-12"
       >
         {hasHero ? (
           <Image src={BRANDING.heroImage} alt="" fill priority sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover object-top" />
@@ -48,11 +48,11 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </div>
         )}
         {/* Overlay for legibility */}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-maroon-950/30 via-maroon-950/45 to-maroon-950/85" />
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-maroon-950/5 via-maroon-950/30 via-45% to-maroon-950/90" />
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_rgba(255,255,255,0.12),_transparent_60%)]" />
 
-        <div className="relative z-10 flex flex-col items-center px-6">
-          <div className="flex size-20 items-center justify-center overflow-hidden rounded-full border-2 border-saffron-300/80 bg-maroon-900/80 shadow-[0_0_40px_rgba(249,127,13,0.35)] sm:size-24">
+        <div className="relative z-10 flex flex-col items-center px-6 [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+          <div className="hidden size-20 items-center justify-center overflow-hidden rounded-full border-2 border-saffron-300/80 lg:flex bg-maroon-900/80 shadow-[0_0_40px_rgba(249,127,13,0.35)] sm:size-24">
             {logo}
           </div>
           <p className={cn(tamil.className, "mt-4 text-sm font-medium tracking-wide text-saffron-200 sm:text-base")}>{BRANDING.invocationTamil}</p>
@@ -69,9 +69,8 @@ export default async function LoginPage(props: PageProps<"/login">) {
           <p className="mt-3 text-xs text-white/80 sm:text-sm">
             {settings.templeName} · {BRANDING.tagline}
           </p>
+          <p className={cn(tamil.className, "mt-6 hidden text-sm text-white/75 lg:block")}>{BRANDING.quoteTamil}</p>
         </div>
-
-        <p className={cn(tamil.className, "absolute inset-x-6 bottom-6 z-10 hidden text-sm text-white/80 lg:block")}>{BRANDING.quoteTamil}</p>
       </section>
 
       {/* Login panel */}
