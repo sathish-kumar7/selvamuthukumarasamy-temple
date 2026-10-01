@@ -13,7 +13,8 @@ const tamil = Noto_Sans_Tamil({ subsets: ["tamil"], weight: ["500", "700", "800"
 export const metadata: Metadata = { title: "Sign in" };
 
 function publicFileExists(publicPath: string): boolean {
-  return existsSync(path.join(process.cwd(), "public", publicPath.replace(/^\//, "")));
+  const file = publicPath.replace(/^\//, "").split("?")[0];
+  return existsSync(path.join(process.cwd(), "public", file));
 }
 
 export default async function LoginPage(props: PageProps<"/login">) {
@@ -45,9 +46,10 @@ export default async function LoginPage(props: PageProps<"/login">) {
             <TempleMark className="absolute left-1/2 top-1/2 size-[70%] -translate-x-1/2 -translate-y-1/2 text-white/5" />
           </div>
         )}
-        {/* Overlay for legibility */}
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-maroon-950/25 via-maroon-950/60 via-45% to-maroon-950/95" />
-        <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_rgba(255,255,255,0.12),_transparent_60%)]" />
+        {/* Maroon tint: multiply blend keeps highlights and detail instead of veiling the photo */}
+        <div aria-hidden className="absolute inset-0 mix-blend-multiply bg-gradient-to-b from-maroon-100/60 via-maroon-300/90 via-55% to-maroon-900" />
+        {/* Extra darkening behind the text only */}
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-b from-transparent via-maroon-950/60 to-maroon-950/90" />
 
         <div className="relative z-10 flex flex-col items-center px-6 [text-shadow:0_2px_6px_rgba(0,0,0,0.85)]">
           <div className="hidden size-20 items-center justify-center overflow-hidden rounded-full border-2 border-saffron-300/80 lg:flex bg-maroon-900/80 shadow-[0_0_40px_rgba(249,127,13,0.35)] sm:size-24">
@@ -59,11 +61,11 @@ export default async function LoginPage(props: PageProps<"/login">) {
             {BRANDING.prefixTamil}
             <span aria-hidden className="ml-2 text-saffron-300">✦</span>
           </p>
-          <h1 className={cn(tamil.className, "mt-1 font-bold leading-snug drop-shadow")}>
+          <h1 className={cn(tamil.className, "mt-3 font-bold leading-relaxed drop-shadow")}>
             <span className="block text-xl sm:text-2xl lg:text-3xl">{BRANDING.nameLine1Tamil}</span>
-            <span className="block text-2xl sm:text-3xl lg:text-4xl">{BRANDING.nameLine2Tamil}</span>
+            <span className="mt-3 block text-2xl sm:text-3xl lg:text-4xl">{BRANDING.nameLine2Tamil}</span>
           </h1>
-          <p className={cn(tamil.className, "mt-2 text-base font-bold text-saffron-200 sm:text-lg lg:text-xl")}>{BRANDING.locationTamil}</p>
+          <p className={cn(tamil.className, "mt-4 text-base font-bold text-saffron-200 sm:text-lg lg:text-xl")}>{BRANDING.locationTamil}</p>
         </div>
       </section>
 
