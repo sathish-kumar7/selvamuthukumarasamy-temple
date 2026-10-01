@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ArrowRight } from "lucide-react";
 import { loginAction } from "@/actions/auth";
 import { initialActionState } from "@/lib/validation/common";
 import { Field, Input } from "@/components/ui/form";
@@ -21,8 +22,8 @@ export function LoginForm({ next }: { next?: string }) {
       <Field label="Password" name="password" required error={errors.password}>
         <Input id="password" name="password" type="password" autoComplete="current-password" required invalid={!!errors.password} />
       </Field>
-      <SubmitButton size="lg" className="w-full" pendingText="Signing in…">
-        Sign in
+      <SubmitButton size="lg" variant="secondary" className="w-full" pendingText="Signing in…">
+        Sign in <ArrowRight className="size-4" aria-hidden />
       </SubmitButton>
     </form>
   );

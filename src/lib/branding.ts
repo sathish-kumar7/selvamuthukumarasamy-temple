@@ -1,0 +1,21 @@
+/**
+ * Static branding used on the sign-in page. Temple details that print on
+ * receipts live in the database (Settings page); these are visual extras.
+ */
+export const BRANDING = {
+  /** Temple name in Tamil, shown as the hero heading. */
+  templeNameTamil: "செல்வ முத்துக்குமாரசாமி திருக்கோவில்",
+  /** Second line under the Tamil heading (location / trust name). */
+  subtitleTamil: "அருள்மிகு செல்வ முத்துக்குமாரசாமி",
+  /** English tagline. */
+  tagline: "Donation and receipt management",
+  /** Quote shown at the bottom of the hero panel. */
+  quoteTamil: "“இறைவன் அருளால் நேர்மையான திருக்கோவில் கணக்குகள்”",
+  /**
+   * Hero photograph. Place the file at public/login-hero.jpg (landscape or
+   * portrait, 1600px+ on the long edge). Falls back to a gradient if missing.
+   */
+  heroImage: "/login-hero.jpg",
+  /** Optional round logo. Place at public/logo.png (square, 512px). */
+  logoImage: "/logo.png",
+} as const;

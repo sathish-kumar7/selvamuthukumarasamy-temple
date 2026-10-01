@@ -200,6 +200,16 @@ src/
     money.ts, dates.ts   INR formatting, IST date helpers
 ```
 
+## Branding the sign-in page
+
+The sign-in page shows a full-height hero panel. Drop these files into `public/` (they are
+not tracked until you add them):
+
+- `public/login-hero.jpg` – deity photograph, 1600px+ on the long edge. Without it a gradient is shown.
+- `public/logo.png` – square logo for the round badge (optional).
+
+Tamil heading, subtitle, tagline and quote are in `src/lib/branding.ts`.
+
 ## Database schema
 
 | Model | Purpose | Notable fields |
