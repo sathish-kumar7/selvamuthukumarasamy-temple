@@ -40,6 +40,8 @@ const METHODS_NEEDING_REFERENCE: PaymentMethod[] = ["UPI", "BANK_TRANSFER", "CHE
 export function DonationForm({ action, categories, defaultValues, mode, cancelHref }: Props) {
   const [state, formAction] = useActionState(action, initialActionState);
   const errors = state.fieldErrors ?? {};
+  // After a failed submit React resets uncontrolled inputs, so prefer the echoed values.
+  const v = (key: keyof DonationFormValues): string => state.values?.[key] ?? defaultValues[key];
   const [method, setMethod] = useState<PaymentMethod | "">(defaultValues.paymentMethod);
   const [amount, setAmount] = useState(defaultValues.amount);
   const parsedAmount = parseAmountInput(amount);
@@ -52,16 +54,16 @@ export function DonationForm({ action, categories, defaultValues, mode, cancelHr
         <CardHeader title="Donor details" description="Search by mobile number is available on the Donations page." />
         <CardBody className="grid gap-5 sm:grid-cols-2">
           <Field label="Donor name" name="donorName" required error={errors.donorName}>
-            <Input id="donorName" name="donorName" defaultValue={defaultValues.donorName} autoComplete="off" autoFocus={mode === "create"} required maxLength={120} invalid={!!errors.donorName} />
+            <Input id="donorName" name="donorName" defaultValue={v("donorName")} autoComplete="off" autoFocus={mode === "create"} required maxLength={120} invalid={!!errors.donorName} />
           </Field>
           <Field label="Mobile number" name="donorMobile" required error={errors.donorMobile} hint="10-digit Indian mobile number">
-            <Input id="donorMobile" name="donorMobile" type="tel" inputMode="numeric" defaultValue={defaultValues.donorMobile} autoComplete="off" required maxLength={15} invalid={!!errors.donorMobile} placeholder="98765 43210" />
+            <Input id="donorMobile" name="donorMobile" type="tel" inputMode="numeric" defaultValue={v("donorMobile")} autoComplete="off" required maxLength={15} invalid={!!errors.donorMobile} placeholder="98765 43210" />
           </Field>
           <Field label="Email" name="donorEmail" error={errors.donorEmail}>
-            <Input id="donorEmail" name="donorEmail" type="email" inputMode="email" defaultValue={defaultValues.donorEmail} autoComplete="off" invalid={!!errors.donorEmail} />
+            <Input id="donorEmail" name="donorEmail" type="email" inputMode="email" defaultValue={v("donorEmail")} autoComplete="off" invalid={!!errors.donorEmail} />
           </Field>
           <Field label="Address" name="donorAddress" error={errors.donorAddress}>
-            <Input id="donorAddress" name="donorAddress" defaultValue={defaultValues.donorAddress} autoComplete="off" maxLength={500} invalid={!!errors.donorAddress} />
+            <Input id="donorAddress" name="donorAddress" defaultValue={v("donorAddress")} autoComplete="off" maxLength={500} invalid={!!errors.donorAddress} />
           </Field>
         </CardBody>
       </Card>
@@ -89,7 +91,7 @@ export function DonationForm({ action, categories, defaultValues, mode, cancelHr
             />
           </Field>
           <Field label="Donation purpose" name="categoryId" required error={errors.categoryId}>
-            <Select id="categoryId" name="categoryId" defaultValue={defaultValues.categoryId} required invalid={!!errors.categoryId}>
+            <Select id="categoryId" name="categoryId" defaultValue={v("categoryId")} required invalid={!!errors.categoryId}>
               <option value="">Select purpose…</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -129,13 +131,13 @@ export function DonationForm({ action, categories, defaultValues, mode, cancelHr
             error={errors.transactionReference}
             hint={method && METHODS_NEEDING_REFERENCE.includes(method) ? "Recommended for reconciliation" : "Optional"}
           >
-            <Input id="transactionReference" name="transactionReference" defaultValue={defaultValues.transactionReference} autoComplete="off" maxLength={100} invalid={!!errors.transactionReference} />
+            <Input id="transactionReference" name="transactionReference" defaultValue={v("transactionReference")} autoComplete="off" maxLength={100} invalid={!!errors.transactionReference} />
           </Field>
           <Field label="Donation date" name="donationDate" required error={errors.donationDate}>
-            <Input id="donationDate" name="donationDate" type="date" defaultValue={defaultValues.donationDate} required invalid={!!errors.donationDate} />
+            <Input id="donationDate" name="donationDate" type="date" defaultValue={v("donationDate")} required invalid={!!errors.donationDate} />
           </Field>
           <Field label="Notes" name="notes" error={errors.notes} className="sm:col-span-2" hint="Internal only. Not printed on the receipt.">
-            <Textarea id="notes" name="notes" defaultValue={defaultValues.notes} maxLength={1000} invalid={!!errors.notes} rows={2} />
+            <Textarea id="notes" name="notes" defaultValue={v("notes")} maxLength={1000} invalid={!!errors.notes} rows={2} />
           </Field>
         </CardBody>
       </Card>

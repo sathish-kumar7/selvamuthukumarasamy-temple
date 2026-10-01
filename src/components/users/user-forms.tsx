@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { KeyRound, Pencil, UserPlus, X } from "lucide-react";
 import type { Role } from "@/generated/prisma/enums";
 import { createUserAction, resetPasswordAction, updateUserAction } from "@/actions/users";
-import { initialActionState } from "@/lib/validation/common";
+import { initialActionState, PASSWORD_MIN_LENGTH } from "@/lib/validation/common";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Field, Input, Select } from "@/components/ui/form";
@@ -13,7 +13,8 @@ import { Alert } from "@/components/ui/alert";
 export interface UserRow {
   id: string;
   name: string;
-  email: string;
+  username: string;
+  email: string | null;
   role: Role;
   active: boolean;
 }
@@ -69,20 +70,23 @@ export function CreateUserDialog() {
       <Button onClick={() => ref.current?.showModal()}>
         <UserPlus className="size-4" aria-hidden /> Add user
       </Button>
-      <DialogFrame dialogRef={ref} title="Add user" description="The user signs in with this email and password. Ask them to change the password after first sign in.">
+      <DialogFrame dialogRef={ref} title="Add user" description="The user signs in with this username and password. Ask them to change the password after first sign in.">
         <form action={action} className="mt-5 space-y-4" noValidate autoComplete="off">
           {state.message && !state.ok ? <Alert tone="error">{state.message}</Alert> : null}
           <Field label="Full name" name="name" required error={errors.name}>
-            <Input id="name" name="name" required invalid={!!errors.name} />
+            <Input id="name" name="name" defaultValue={state.values?.name ?? ""} required invalid={!!errors.name} />
           </Field>
-          <Field label="Email" name="email" required error={errors.email}>
-            <Input id="email" name="email" type="email" required invalid={!!errors.email} autoComplete="off" />
+          <Field label="Username" name="username" required error={errors.username} hint="Short login name, e.g. ravi or staff1">
+            <Input id="username" name="username" defaultValue={state.values?.username ?? ""} required minLength={3} maxLength={30} autoCapitalize="none" spellCheck={false} invalid={!!errors.username} autoComplete="off" />
+          </Field>
+          <Field label="Email" name="email" error={errors.email} hint="Optional">
+            <Input id="email" name="email" type="email" defaultValue={state.values?.email ?? ""} invalid={!!errors.email} autoComplete="off" />
           </Field>
           <Field label="Role" name="role" required error={errors.role}>
-            <RoleSelect defaultValue="STAFF" invalid={!!errors.role} />
+            <RoleSelect defaultValue={(state.values?.role as Role | undefined) ?? "STAFF"} invalid={!!errors.role} />
           </Field>
-          <Field label="Temporary password" name="password" required error={errors.password} hint="At least 10 characters">
-            <Input id="password" name="password" type="password" required minLength={10} invalid={!!errors.password} autoComplete="new-password" />
+          <Field label="Temporary password" name="password" required error={errors.password} hint={`At least ${PASSWORD_MIN_LENGTH} characters`}>
+            <Input id="password" name="password" type="password" required minLength={PASSWORD_MIN_LENGTH} invalid={!!errors.password} autoComplete="new-password" />
           </Field>
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => ref.current?.close()}>
@@ -114,20 +118,23 @@ export function EditUserDialog({ user, isSelf }: { user: UserRow; isSelf: boolea
           {state.message && !state.ok ? <Alert tone="error">{state.message}</Alert> : null}
           <input type="hidden" name="userId" value={user.id} />
           <Field label="Full name" name="name" required error={errors.name}>
-            <Input id="name" name="name" defaultValue={user.name} required invalid={!!errors.name} />
+            <Input id="name" name="name" defaultValue={state.values?.name ?? user.name} required invalid={!!errors.name} />
           </Field>
-          <Field label="Email" name="email" required error={errors.email}>
-            <Input id="email" name="email" type="email" defaultValue={user.email} required invalid={!!errors.email} />
+          <Field label="Username" name="username" required error={errors.username}>
+            <Input id="username" name="username" defaultValue={state.values?.username ?? user.username} required minLength={3} maxLength={30} autoCapitalize="none" spellCheck={false} invalid={!!errors.username} />
+          </Field>
+          <Field label="Email" name="email" error={errors.email} hint="Optional">
+            <Input id="email" name="email" type="email" defaultValue={state.values?.email ?? user.email ?? ""} invalid={!!errors.email} />
           </Field>
           <Field label="Role" name="role" required error={errors.role} hint={isSelf ? "You cannot change your own role." : undefined}>
-            <Select id="role" name="role" defaultValue={user.role} disabled={isSelf} invalid={!!errors.role}>
+            <Select id="role" name="role" defaultValue={state.values?.role ?? user.role} disabled={isSelf} invalid={!!errors.role}>
               <option value="STAFF">Staff – add and view donations</option>
               <option value="ADMIN">Admin – full access</option>
             </Select>
             {isSelf ? <input type="hidden" name="role" value={user.role} /> : null}
           </Field>
           <Field label="Status" name="active" required error={errors.active} hint={isSelf ? "You cannot deactivate your own account." : "Deactivated users cannot sign in but their history is kept."}>
-            <Select id="active" name="active" defaultValue={String(user.active)} disabled={isSelf}>
+            <Select id="active" name="active" defaultValue={state.values?.active ?? String(user.active)} disabled={isSelf}>
               <option value="true">Active</option>
               <option value="false">Deactivated</option>
             </Select>
@@ -164,8 +171,8 @@ export function ResetPasswordDialog({ user }: { user: UserRow }) {
         <form action={action} className="mt-5 space-y-4" noValidate>
           {state.message && !state.ok ? <Alert tone="error">{state.message}</Alert> : null}
           <input type="hidden" name="userId" value={user.id} />
-          <Field label="New password" name="password" required error={errors.password} hint="At least 10 characters">
-            <Input id="password" name="password" type="password" required minLength={10} invalid={!!errors.password} autoComplete="new-password" />
+          <Field label="New password" name="password" required error={errors.password} hint={`At least ${PASSWORD_MIN_LENGTH} characters`}>
+            <Input id="password" name="password" type="password" required minLength={PASSWORD_MIN_LENGTH} invalid={!!errors.password} autoComplete="new-password" />
           </Field>
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => ref.current?.close()}>

@@ -6,17 +6,17 @@ import { requireAdmin } from "@/lib/auth/current-user";
 import { writeAuditLog } from "@/lib/audit";
 import { getRequestIp } from "@/lib/request-ip";
 import { categorySchema, templeSettingsSchema, updateCategorySchema } from "@/lib/validation/settings";
-import { formDataToObject, toFieldErrors, type ActionState } from "@/lib/validation/common";
+import { formDataToObject, toFieldErrors, withValues, type ActionState } from "@/lib/validation/common";
 
 export async function createCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = categorySchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
 
   const duplicate = await prisma.donationCategory.findFirst({
     where: { name: { equals: parsed.data.name, mode: "insensitive" } },
   });
-  if (duplicate) return { ok: false, fieldErrors: { name: "This category already exists" } };
+  if (duplicate) return withValues({ ok: false, fieldErrors: { name: "This category already exists" } }, formData);
 
   const maxOrder = await prisma.donationCategory.aggregate({ _max: { sortOrder: true } });
   const category = await prisma.donationCategory.create({
@@ -37,7 +37,7 @@ export async function createCategoryAction(_prev: ActionState, formData: FormDat
 export async function updateCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = updateCategorySchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
   const { categoryId, ...data } = parsed.data;
 
   const existing = await prisma.donationCategory.findUnique({ where: { id: categoryId } });
@@ -46,7 +46,7 @@ export async function updateCategoryAction(_prev: ActionState, formData: FormDat
   const duplicate = await prisma.donationCategory.findFirst({
     where: { name: { equals: data.name, mode: "insensitive" }, id: { not: categoryId } },
   });
-  if (duplicate) return { ok: false, fieldErrors: { name: "Another category already has this name" } };
+  if (duplicate) return withValues({ ok: false, fieldErrors: { name: "Another category already has this name" } }, formData);
 
   await prisma.donationCategory.update({ where: { id: categoryId }, data });
   await writeAuditLog({
@@ -64,7 +64,7 @@ export async function updateCategoryAction(_prev: ActionState, formData: FormDat
 export async function updateTempleSettingsAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = templeSettingsSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
 
   const before = await prisma.templeSettings.findUnique({ where: { id: 1 } });
   await prisma.templeSettings.upsert({

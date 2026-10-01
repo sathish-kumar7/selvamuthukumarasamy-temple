@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { changeOwnPasswordAction } from "@/actions/auth";
-import { initialActionState } from "@/lib/validation/common";
+import { initialActionState, PASSWORD_MIN_LENGTH } from "@/lib/validation/common";
 import { Field, Input } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Alert } from "@/components/ui/alert";
@@ -21,8 +21,8 @@ export function ChangePasswordForm() {
       <Field label="Current password" name="currentPassword" required error={errors.currentPassword}>
         <Input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" required invalid={!!errors.currentPassword} />
       </Field>
-      <Field label="New password" name="newPassword" required error={errors.newPassword} hint="At least 10 characters">
-        <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" required minLength={10} invalid={!!errors.newPassword} />
+      <Field label="New password" name="newPassword" required error={errors.newPassword} hint={`At least ${PASSWORD_MIN_LENGTH} characters`}>
+        <Input id="newPassword" name="newPassword" type="password" autoComplete="new-password" required minLength={PASSWORD_MIN_LENGTH} invalid={!!errors.newPassword} />
       </Field>
       <Field label="Confirm new password" name="confirmPassword" required error={errors.confirmPassword}>
         <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" required invalid={!!errors.confirmPassword} />

@@ -45,7 +45,9 @@ enum AuditAction {
 model User {
   id           String   @id @default(cuid())
   name         String
-  email        String   @unique
+  /// Short login name, e.g. "admin". Lowercase letters, digits, dot, underscore, hyphen.
+  username     String   @unique
+  email        String?  @unique
   passwordHash String
   role         Role     @default(STAFF)
   active       Boolean  @default(true)

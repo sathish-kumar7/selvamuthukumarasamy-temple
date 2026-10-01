@@ -8,6 +8,17 @@ export interface ActionState {
   ok: boolean;
   message?: string;
   fieldErrors?: FieldErrors;
+  /** Submitted values echoed back on failure so forms can repopulate (React resets uncontrolled fields after an action). */
+  values?: Record<string, string>;
+}
+
+/** Attaches the submitted (non-secret) values to a failed action state. */
+export function withValues(state: ActionState, formData: FormData): ActionState {
+  const values: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string" && !/password/i.test(key) && !(key in values)) values[key] = value;
+  }
+  return { ...state, values };
 }
 
 export const initialActionState: ActionState = { ok: false };
@@ -64,10 +75,21 @@ export const amount = z
     return parsed;
   });
 
+export const PASSWORD_MIN_LENGTH = 5;
+
 export const password = z
   .string()
-  .min(10, "Password must be at least 10 characters")
+  .min(PASSWORD_MIN_LENGTH, `Password must be at least ${PASSWORD_MIN_LENGTH} characters`)
   .max(128, "Password must be at most 128 characters");
+
+/** Short login name such as "admin" or "ravi.k". Stored lowercase. */
+export const username = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, "Username must be at least 3 characters")
+  .max(30, "Username must be at most 30 characters")
+  .regex(/^[a-z0-9][a-z0-9._-]*$/, "Use only letters, numbers, dot, underscore or hyphen");
 
 /** Reads FormData into a plain object of strings (first value per key). */
 export function formDataToObject(formData: FormData): Record<string, string> {

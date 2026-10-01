@@ -15,7 +15,7 @@ export default async function UsersPage(props: PageProps<"/users">) {
   const [admin, searchParams] = await Promise.all([requireAdmin(), props.searchParams]);
   const users = await prisma.user.findMany({
     orderBy: [{ active: "desc" }, { role: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true, _count: { select: { donationsCreated: true } } },
+    select: { id: true, name: true, username: true, email: true, role: true, active: true, createdAt: true, _count: { select: { donationsCreated: true } } },
   });
 
   return (
@@ -34,7 +34,10 @@ export default async function UsersPage(props: PageProps<"/users">) {
                     {u.name}
                     {u.id === admin.id ? <span className="ml-2 text-xs font-normal text-stone-500">(you)</span> : null}
                   </p>
-                  <p className="truncate text-xs text-stone-500">{u.email}</p>
+                  <p className="truncate text-xs text-stone-500">
+                    <span className="font-mono">{u.username}</span>
+                    {u.email ? ` · ${u.email}` : ""}
+                  </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <Badge tone={u.role === "ADMIN" ? "brand" : "neutral"}>{u.role === "ADMIN" ? "Admin" : "Staff"}</Badge>
@@ -57,6 +60,7 @@ export default async function UsersPage(props: PageProps<"/users">) {
           <thead>
             <tr>
               <Th>Name</Th>
+              <Th>Username</Th>
               <Th className="hidden lg:table-cell">Email</Th>
               <Th>Role</Th>
               <Th>Status</Th>
@@ -71,9 +75,9 @@ export default async function UsersPage(props: PageProps<"/users">) {
                 <Td>
                   <span className="font-medium text-stone-900">{u.name}</span>
                   {u.id === admin.id ? <span className="ml-2 text-xs text-stone-500">(you)</span> : null}
-                  <span className="block text-xs text-stone-500 lg:hidden">{u.email}</span>
                 </Td>
-                <Td className="hidden lg:table-cell">{u.email}</Td>
+                <Td className="font-mono text-sm">{u.username}</Td>
+                <Td className="hidden lg:table-cell">{u.email ?? <span className="text-stone-400">—</span>}</Td>
                 <Td>
                   <Badge tone={u.role === "ADMIN" ? "brand" : "neutral"}>{u.role === "ADMIN" ? "Admin" : "Staff"}</Badge>
                 </Td>

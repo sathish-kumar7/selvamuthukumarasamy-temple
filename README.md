@@ -29,7 +29,7 @@ Production domain: **https://selvamuthukumarasamy.in**
 
 | Feature | Details |
 | --- | --- |
-| Authentication | Email + password, bcrypt hashes, signed `httpOnly` session cookie (12 h), login rate limiting, audit log of sign-ins |
+| Authentication | Username + password, bcrypt hashes, signed `httpOnly` session cookie (12 h), login rate limiting (5 attempts / 15 min), audit log of sign-ins |
 | Roles | `ADMIN` (everything) and `STAFF` (add/view donations, print/share receipts, view reports) |
 | Dashboard | Today's and this month's totals, receipt counts, today's split by payment method, recent donations |
 | Add donation | Donor details, amount (with amount-in-words preview), purpose, payment method, reference, date, notes. Validated with Zod on client and server |
@@ -71,12 +71,12 @@ npm install                 # also runs `prisma generate`
 cp .env.example .env        # then edit .env (see Environment variables)
 
 npm run db:migrate          # applies migrations to DATABASE_URL
-SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD='choose-a-strong-password' npm run db:seed
+SEED_ADMIN_USERNAME=admin SEED_ADMIN_PASSWORD='choose-a-password' npm run db:seed
 
 npm run dev                 # http://localhost:3000
 ```
 
-Sign in with the seeded admin email and password, then go to **Settings** to fill in
+Sign in with the seeded admin username and password, then go to **Settings** to fill in
 the temple address and phone number that print on receipts, and to **Users** to add staff.
 
 For a local database on macOS with Homebrew:
@@ -112,8 +112,9 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 | `AUTH_SECRET` | yes | ≥ 32 random characters used to sign session cookies. Generate: `openssl rand -base64 48` |
 | `NEXT_PUBLIC_APP_URL` | yes | Public base URL, e.g. `https://selvamuthukumarasamy.in`. Used in share links. |
 | `SEED_ADMIN_NAME` | seed only | Display name for the first admin. |
-| `SEED_ADMIN_EMAIL` | seed only | Email for the first admin. |
-| `SEED_ADMIN_PASSWORD` | seed only | Initial admin password (≥ 10 chars). Hashed with bcrypt, never stored or printed. |
+| `SEED_ADMIN_USERNAME` | seed only | Login name for the first admin (default `admin`). |
+| `SEED_ADMIN_EMAIL` | seed only | Optional email for the first admin. |
+| `SEED_ADMIN_PASSWORD` | seed only | Initial admin password (≥ 5 chars). Hashed with bcrypt, never stored or printed. |
 | `SEED_ADMIN_RESET_PASSWORD` | seed only | Set to `true` to reset an existing admin's password when re-seeding. |
 
 Rotating `AUTH_SECRET` signs every user out immediately.
@@ -146,12 +147,16 @@ and the temple settings row.
 moment you run the seed, so it is not written to disk:
 
 ```bash
-SEED_ADMIN_EMAIL=admin@selvamuthukumarasamy.in \
-SEED_ADMIN_PASSWORD="$(openssl rand -base64 18)" \
-npm run db:seed
+SEED_ADMIN_USERNAME=admin SEED_ADMIN_PASSWORD='your-password' npm run db:seed
 ```
 
-Print or note the generated password once, sign in, and change it under **My account**.
+Sign in with that username and password, then change the password under **My account** if needed.
+To reset a forgotten admin password later, re-run the same command with `SEED_ADMIN_RESET_PASSWORD=true`.
+
+> Passwords only need to be 5 characters (configurable via `PASSWORD_MIN_LENGTH` in
+> `src/lib/validation/common.ts`). This was a deliberate usability choice for temple staff;
+> the login rate limiter (5 attempts per 15 minutes per IP + username) is the main brute-force
+> defence. Raise the minimum if the app is ever exposed to a wider audience.
 Re-running the seed is safe: existing users and categories are left untouched.
 
 ## Development commands
@@ -199,7 +204,7 @@ src/
 
 | Model | Purpose | Notable fields |
 | --- | --- | --- |
-| `User` | Staff accounts | `email` (unique), `passwordHash`, `role` (ADMIN/STAFF), `active` |
+| `User` | Staff accounts | `username` (unique), `email` (optional, unique), `passwordHash`, `role` (ADMIN/STAFF), `active` |
 | `Donor` | Donor identity | `name`, `mobile` (indexed), `email`, `address` |
 | `DonationCategory` | Configurable purposes | `name` (unique), `active`, `sortOrder` |
 | `Donation` | One receipt | `receiptNumber` (unique), `amount` `DECIMAL(12,2)`, `paymentMethod`, `donationDate` `DATE`, `status` (ACTIVE/CANCELLED), `publicReceiptToken` (unique), `createdById`, `updatedById`, `cancelledAt/By/Reason` |
@@ -289,7 +294,7 @@ Neon database.
 - [ ] `AUTH_SECRET` is unique to production, ≥ 32 chars, stored only in Vercel env vars
 - [ ] `DATABASE_URL` uses `sslmode=require` and is stored only in Vercel env vars
 - [ ] `.env` is not tracked by Git (`git ls-files .env` prints nothing)
-- [ ] Seeded admin password was generated randomly and changed after first login
+- [ ] Seeded admin password is not a dictionary word such as `admin`; change it after first login
 - [ ] Every staff member has their own account; shared logins are not used
 - [ ] Staff accounts use `STAFF` role; only trustees/treasurer have `ADMIN`
 - [ ] Deactivate accounts of people who leave (Users → Edit → Deactivated)
@@ -311,7 +316,7 @@ Neon database.
 - Optional 80G/tax-exemption fields on receipts (PAN capture, 80G registration number)
 - Tamil-language receipt option
 - Session revocation list / device management
-- Persistent (database-backed) login rate limiting
+- Persistent (database-backed) login rate limiting and account lockout (important given short passwords)
 - Financial-year (April–March) reporting presets
 - Bulk import of historical receipts
 - Automated tests (unit tests for money/date/words helpers, Playwright end-to-end flows)

@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { can } from "@/lib/auth/permissions";
 import { getRequestIp } from "@/lib/request-ip";
 import { cancelDonationSchema, donationSchema } from "@/lib/validation/donation";
-import { formDataToObject, toFieldErrors, type ActionState } from "@/lib/validation/common";
+import { formDataToObject, toFieldErrors, withValues, type ActionState } from "@/lib/validation/common";
 import { cancelDonation, createDonation, DonationError, updateDonation } from "@/lib/donations/service";
 
 function handleError(error: unknown): ActionState {
@@ -23,7 +23,7 @@ export async function createDonationAction(_prev: ActionState, formData: FormDat
 
   const parsed = donationSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
-    return { ok: false, message: "Please fix the highlighted fields", fieldErrors: toFieldErrors(parsed.error) };
+    return withValues({ ok: false, message: "Please fix the highlighted fields", fieldErrors: toFieldErrors(parsed.error) }, formData);
   }
 
   let donationId: string;
@@ -31,7 +31,7 @@ export async function createDonationAction(_prev: ActionState, formData: FormDat
     const donation = await createDonation(parsed.data, { id: user.id, ip: await getRequestIp() });
     donationId = donation.id;
   } catch (error) {
-    return handleError(error);
+    return withValues(handleError(error), formData);
   }
   revalidatePath("/dashboard");
   revalidatePath("/donations");
@@ -44,12 +44,12 @@ export async function updateDonationAction(donationId: string, _prev: ActionStat
 
   const parsed = donationSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
-    return { ok: false, message: "Please fix the highlighted fields", fieldErrors: toFieldErrors(parsed.error) };
+    return withValues({ ok: false, message: "Please fix the highlighted fields", fieldErrors: toFieldErrors(parsed.error) }, formData);
   }
   try {
     await updateDonation(donationId, parsed.data, { id: user.id, ip: await getRequestIp() });
   } catch (error) {
-    return handleError(error);
+    return withValues(handleError(error), formData);
   }
   revalidatePath("/dashboard");
   revalidatePath("/donations");
@@ -62,7 +62,7 @@ export async function cancelDonationAction(_prev: ActionState, formData: FormDat
   if (!can(user.role, "donation:cancel")) return { ok: false, message: "Only administrators can cancel donations" };
 
   const parsed = cancelDonationSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
 
   try {
     await cancelDonation(parsed.data.donationId, parsed.data.reason, { id: user.id, ip: await getRequestIp() });

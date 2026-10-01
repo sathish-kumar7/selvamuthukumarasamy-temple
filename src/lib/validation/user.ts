@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { Role } from "@/generated/prisma/enums";
-import { password, trimmedString } from "./common";
+import { optionalEmail, password, trimmedString, username } from "./common";
 
 const roleValues = Object.values(Role) as [Role, ...Role[]];
 
 export const createUserSchema = z.object({
   name: trimmedString.min(2, "Name is required").max(120),
-  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
+  username,
+  email: optionalEmail,
   role: z.enum(roleValues, { message: "Select a role" }),
   password,
 });
@@ -14,7 +15,8 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
   userId: trimmedString.min(1),
   name: trimmedString.min(2, "Name is required").max(120),
-  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
+  username,
+  email: optionalEmail,
   role: z.enum(roleValues, { message: "Select a role" }),
   active: z.enum(["true", "false"]).transform((v) => v === "true"),
 });

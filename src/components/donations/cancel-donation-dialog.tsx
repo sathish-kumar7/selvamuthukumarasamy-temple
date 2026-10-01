@@ -64,7 +64,7 @@ export function CancelDonationDialog({ donationId, receiptNumber, amountLabel, d
           <input type="hidden" name="donationId" value={donationId} />
           <div className="mt-5">
             <Field label="Reason for cancellation" name="reason" required error={state.fieldErrors?.reason}>
-              <Textarea id="reason" name="reason" required minLength={5} maxLength={500} rows={3} placeholder="e.g. Duplicate entry, wrong amount entered, donor requested refund" invalid={!!state.fieldErrors?.reason} />
+              <Textarea id="reason" name="reason" defaultValue={state.values?.reason ?? ""} required minLength={5} maxLength={500} rows={3} placeholder="e.g. Duplicate entry, wrong amount entered, donor requested refund" invalid={!!state.fieldErrors?.reason} />
             </Field>
           </div>
 

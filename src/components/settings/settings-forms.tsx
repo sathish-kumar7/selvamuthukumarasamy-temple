@@ -13,36 +13,37 @@ import { Alert } from "@/components/ui/alert";
 export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
   const [state, action] = useActionState(updateTempleSettingsAction, initialActionState);
   const errors = state.fieldErrors ?? {};
+  const v = (key: keyof TempleSettings, fallback: string): string => state.values?.[key] ?? fallback;
   return (
     <form action={action} className="space-y-5" noValidate>
       {state.message ? <Alert tone={state.ok ? "success" : "error"}>{state.message}</Alert> : null}
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Temple name" name="templeName" required error={errors.templeName} className="sm:col-span-2">
-          <Input id="templeName" name="templeName" defaultValue={settings.templeName} required invalid={!!errors.templeName} />
+          <Input id="templeName" name="templeName" defaultValue={v("templeName", settings.templeName)} required invalid={!!errors.templeName} />
         </Field>
         <Field label="Address line 1" name="addressLine1" error={errors.addressLine1}>
-          <Input id="addressLine1" name="addressLine1" defaultValue={settings.addressLine1 ?? ""} invalid={!!errors.addressLine1} />
+          <Input id="addressLine1" name="addressLine1" defaultValue={v("addressLine1", settings.addressLine1 ?? "")} invalid={!!errors.addressLine1} />
         </Field>
         <Field label="Address line 2" name="addressLine2" error={errors.addressLine2}>
-          <Input id="addressLine2" name="addressLine2" defaultValue={settings.addressLine2 ?? ""} invalid={!!errors.addressLine2} />
+          <Input id="addressLine2" name="addressLine2" defaultValue={v("addressLine2", settings.addressLine2 ?? "")} invalid={!!errors.addressLine2} />
         </Field>
         <Field label="Phone" name="phone" error={errors.phone}>
-          <Input id="phone" name="phone" type="tel" defaultValue={settings.phone ?? ""} invalid={!!errors.phone} />
+          <Input id="phone" name="phone" type="tel" defaultValue={v("phone", settings.phone ?? "")} invalid={!!errors.phone} />
         </Field>
         <Field label="Email" name="email" error={errors.email}>
-          <Input id="email" name="email" type="email" defaultValue={settings.email ?? ""} invalid={!!errors.email} />
+          <Input id="email" name="email" type="email" defaultValue={v("email", settings.email ?? "")} invalid={!!errors.email} />
         </Field>
         <Field label="Website" name="website" error={errors.website}>
-          <Input id="website" name="website" defaultValue={settings.website ?? ""} invalid={!!errors.website} placeholder="selvamuthukumarasamy.in" />
+          <Input id="website" name="website" defaultValue={v("website", settings.website ?? "")} invalid={!!errors.website} placeholder="selvamuthukumarasamy.in" />
         </Field>
         <Field label="Receipt prefix" name="receiptPrefix" required error={errors.receiptPrefix} hint="Used in new receipt numbers, e.g. SMT-2026-000001. Changing it does not affect existing receipts.">
-          <Input id="receiptPrefix" name="receiptPrefix" defaultValue={settings.receiptPrefix} required maxLength={6} className="font-mono uppercase" invalid={!!errors.receiptPrefix} />
+          <Input id="receiptPrefix" name="receiptPrefix" defaultValue={v("receiptPrefix", settings.receiptPrefix)} required maxLength={6} className="font-mono uppercase" invalid={!!errors.receiptPrefix} />
         </Field>
         <Field label="Thank-you message" name="thankYouMessage" required error={errors.thankYouMessage} className="sm:col-span-2">
-          <Textarea id="thankYouMessage" name="thankYouMessage" defaultValue={settings.thankYouMessage} rows={3} maxLength={500} invalid={!!errors.thankYouMessage} />
+          <Textarea id="thankYouMessage" name="thankYouMessage" defaultValue={v("thankYouMessage", settings.thankYouMessage)} rows={3} maxLength={500} invalid={!!errors.thankYouMessage} />
         </Field>
         <Field label="Authorized signatory label" name="authorizedSignatory" required error={errors.authorizedSignatory}>
-          <Input id="authorizedSignatory" name="authorizedSignatory" defaultValue={settings.authorizedSignatory} required invalid={!!errors.authorizedSignatory} />
+          <Input id="authorizedSignatory" name="authorizedSignatory" defaultValue={v("authorizedSignatory", settings.authorizedSignatory)} required invalid={!!errors.authorizedSignatory} />
         </Field>
       </div>
       <div className="flex justify-end">
@@ -61,7 +62,7 @@ export function AddCategoryForm() {
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-3 sm:flex-row sm:items-start" noValidate>
       <div className="flex-1">
-        <Input id="name" name="name" placeholder="New category name, e.g. Kumbabishekam" aria-label="New category name" required maxLength={80} invalid={!!state.fieldErrors?.name} />
+        <Input id="name" name="name" defaultValue={state.ok ? "" : (state.values?.name ?? "")} placeholder="New category name, e.g. Kumbabishekam" aria-label="New category name" required maxLength={80} invalid={!!state.fieldErrors?.name} />
         {state.fieldErrors?.name ? <p className="mt-1.5 text-sm text-red-600" role="alert">{state.fieldErrors.name}</p> : null}
         {state.ok && state.message ? <p className="mt-1.5 text-sm text-emerald-700">{state.message}</p> : null}
       </div>
@@ -96,10 +97,10 @@ export function EditCategoryDialog({ category }: { category: { id: string; name:
           <input type="hidden" name="categoryId" value={category.id} />
           <div className="mt-5 space-y-4">
             <Field label="Name" name="name" required error={state.fieldErrors?.name}>
-              <Input id="name" name="name" defaultValue={category.name} required maxLength={80} invalid={!!state.fieldErrors?.name} />
+              <Input id="name" name="name" defaultValue={state.values?.name ?? category.name} required maxLength={80} invalid={!!state.fieldErrors?.name} />
             </Field>
             <Field label="Status" name="active" hint="Inactive categories are hidden from the donation form but keep their history.">
-              <Select id="active" name="active" defaultValue={String(category.active)}>
+              <Select id="active" name="active" defaultValue={state.values?.active ?? String(category.active)}>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </Select>

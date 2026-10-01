@@ -10,7 +10,7 @@ export default async function AccountPage() {
   const user = await requireUser();
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="My account" description={`${user.name} · ${user.email} · ${user.role === "ADMIN" ? "Administrator" : "Staff"}`} />
+      <PageHeader title="My account" description={`${user.name} · @${user.username}${user.email ? ` · ${user.email}` : ""} · ${user.role === "ADMIN" ? "Administrator" : "Staff"}`} />
       <Card>
         <CardHeader title="Change password" />
         <CardBody>

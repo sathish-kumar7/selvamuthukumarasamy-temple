@@ -15,8 +15,8 @@ export function LoginForm({ next }: { next?: string }) {
     <form action={action} className="space-y-5" noValidate>
       {next ? <input type="hidden" name="next" value={next} /> : null}
       {state.message ? <Alert tone="error">{state.message}</Alert> : null}
-      <Field label="Email" name="email" required error={errors.email}>
-        <Input id="email" name="email" type="email" autoComplete="username" inputMode="email" required autoFocus invalid={!!errors.email} />
+      <Field label="Username" name="username" required error={errors.username}>
+        <Input id="username" name="username" defaultValue={state.values?.username ?? ""} autoComplete="username" autoCapitalize="none" spellCheck={false} required autoFocus invalid={!!errors.username} placeholder="admin" />
       </Field>
       <Field label="Password" name="password" required error={errors.password}>
         <Input id="password" name="password" type="password" autoComplete="current-password" required invalid={!!errors.password} />

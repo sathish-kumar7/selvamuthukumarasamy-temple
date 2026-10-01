@@ -11,27 +11,27 @@ import { writeAuditLog } from "@/lib/audit";
 import { getRequestIp } from "@/lib/request-ip";
 import { loginSchema } from "@/lib/validation/auth";
 import { changeOwnPasswordSchema } from "@/lib/validation/user";
-import { formDataToObject, toFieldErrors, type ActionState } from "@/lib/validation/common";
+import { formDataToObject, toFieldErrors, withValues, type ActionState } from "@/lib/validation/common";
 import { SESSION_COOKIE } from "@/lib/constants";
 
-const GENERIC_LOGIN_ERROR = "Invalid email or password";
+const GENERIC_LOGIN_ERROR = "Invalid username or password";
 
 export async function loginAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = loginSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
-    return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+    return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
   }
-  const { email, password } = parsed.data;
+  const { username, password } = parsed.data;
   const ip = await getRequestIp();
-  const rateKey = `${ip ?? "unknown"}:${email}`;
+  const rateKey = `${ip ?? "unknown"}:${username}`;
 
   const limit = checkLoginRateLimit(rateKey);
   if (!limit.allowed) {
     const minutes = Math.max(1, Math.ceil(limit.retryAfterSeconds / 60));
-    return { ok: false, message: `Too many failed attempts. Try again in ${minutes} minute${minutes > 1 ? "s" : ""}.` };
+    return withValues({ ok: false, message: `Too many failed attempts. Try again in ${minutes} minute${minutes > 1 ? "s" : ""}.` }, formData);
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { username } });
   const valid = user ? await verifyPassword(password, user.passwordHash) : false;
 
   if (!user || !valid || !user.active) {
@@ -41,9 +41,9 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
       entityType: "Auth",
       entityId: user?.id ?? null,
       ipAddress: ip,
-      details: { email, reason: !user ? "unknown_email" : !valid ? "bad_password" : "inactive" },
+      details: { username, reason: !user ? "unknown_username" : !valid ? "bad_password" : "inactive" },
     });
-    return { ok: false, message: GENERIC_LOGIN_ERROR };
+    return withValues({ ok: false, message: GENERIC_LOGIN_ERROR }, formData);
   }
 
   clearLoginFailures(rateKey);

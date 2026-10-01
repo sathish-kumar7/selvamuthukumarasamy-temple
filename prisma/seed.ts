@@ -4,7 +4,7 @@
  *
  * The admin password is NEVER hardcoded. Provide it via environment variables:
  *
- *   SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD='a-strong-password' npm run db:seed
+ *   SEED_ADMIN_USERNAME=admin SEED_ADMIN_PASSWORD='a-strong-password' npm run db:seed
  *
  * Re-running is safe: existing users/categories are left untouched (the admin
  * password is not reset unless SEED_ADMIN_RESET_PASSWORD=true).
@@ -28,15 +28,19 @@ async function main() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL is required");
 
-  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const username = (process.env.SEED_ADMIN_USERNAME?.trim() || "admin").toLowerCase();
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase() || null;
   const password = process.env.SEED_ADMIN_PASSWORD;
   const name = process.env.SEED_ADMIN_NAME?.trim() || "Temple Administrator";
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new Error("SEED_ADMIN_EMAIL must be a valid email address");
+  if (!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(username)) {
+    throw new Error("SEED_ADMIN_USERNAME must be 3-30 characters: letters, numbers, dot, underscore or hyphen");
   }
-  if (!password || password.length < 10) {
-    throw new Error("SEED_ADMIN_PASSWORD must be set and at least 10 characters. It is never stored in the repository.");
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("SEED_ADMIN_EMAIL must be a valid email address if provided");
+  }
+  if (!password || password.length < 5) {
+    throw new Error("SEED_ADMIN_PASSWORD must be set and at least 5 characters. It is never stored in the repository.");
   }
 
   // Print the target host (never the credentials) so it is obvious which database is being seeded.
@@ -44,16 +48,16 @@ async function main() {
 
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
   try {
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findUnique({ where: { username } });
     const passwordHash = await bcrypt.hash(password, 12);
     if (!existing) {
-      await prisma.user.create({ data: { name, email, role: "ADMIN", passwordHash, active: true } });
-      console.log(`Created ADMIN user ${email}`);
+      await prisma.user.create({ data: { name, username, email, role: "ADMIN", passwordHash, active: true } });
+      console.log(`Created ADMIN user "${username}"`);
     } else if (process.env.SEED_ADMIN_RESET_PASSWORD === "true") {
-      await prisma.user.update({ where: { email }, data: { passwordHash, active: true, role: "ADMIN" } });
-      console.log(`Reset password for existing user ${email}`);
+      await prisma.user.update({ where: { username }, data: { passwordHash, active: true, role: "ADMIN" } });
+      console.log(`Reset password for existing user "${username}"`);
     } else {
-      console.log(`Admin user ${email} already exists; skipping (set SEED_ADMIN_RESET_PASSWORD=true to reset the password)`);
+      console.log(`Admin user "${username}" already exists; skipping (set SEED_ADMIN_RESET_PASSWORD=true to reset the password)`);
     }
 
     let created = 0;

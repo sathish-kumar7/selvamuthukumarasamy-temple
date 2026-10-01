@@ -5,7 +5,7 @@
  * to a database or KV store if stronger guarantees are needed.
  */
 const WINDOW_MS = 15 * 60 * 1000;
-const MAX_ATTEMPTS = 10;
+const MAX_ATTEMPTS = 5;
 
 const attempts = new Map<string, { count: number; resetAt: number }>();
 

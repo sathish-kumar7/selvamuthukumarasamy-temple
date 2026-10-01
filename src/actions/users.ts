@@ -8,20 +8,25 @@ import { hashPassword } from "@/lib/auth/password";
 import { writeAuditLog } from "@/lib/audit";
 import { getRequestIp } from "@/lib/request-ip";
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from "@/lib/validation/user";
-import { formDataToObject, toFieldErrors, type ActionState } from "@/lib/validation/common";
+import { formDataToObject, toFieldErrors, withValues, type ActionState } from "@/lib/validation/common";
 
 export async function createUserAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = createUserSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
 
-  const exists = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (exists) return { ok: false, fieldErrors: { email: "A user with this email already exists" } };
+  const usernameTaken = await prisma.user.findUnique({ where: { username: parsed.data.username } });
+  if (usernameTaken) return withValues({ ok: false, fieldErrors: { username: "This username is already taken" } }, formData);
+  if (parsed.data.email) {
+    const emailTaken = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+    if (emailTaken) return withValues({ ok: false, fieldErrors: { email: "A user with this email already exists" } }, formData);
+  }
 
   const user = await prisma.user.create({
     data: {
       name: parsed.data.name,
-      email: parsed.data.email,
+      username: parsed.data.username,
+      email: parsed.data.email ?? null,
       role: parsed.data.role,
       passwordHash: await hashPassword(parsed.data.password),
     },
@@ -32,7 +37,7 @@ export async function createUserAction(_prev: ActionState, formData: FormData): 
     entityId: user.id,
     userId: admin.id,
     ipAddress: await getRequestIp(),
-    details: { email: user.email, role: user.role },
+    details: { username: user.username, email: user.email, role: user.role },
   });
   revalidatePath("/users");
   redirect("/users?created=1");
@@ -41,7 +46,7 @@ export async function createUserAction(_prev: ActionState, formData: FormData): 
 export async function updateUserAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = updateUserSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success) return { ok: false, fieldErrors: toFieldErrors(parsed.error) };
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
   const { userId, ...data } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { id: userId } });
@@ -50,16 +55,20 @@ export async function updateUserAction(_prev: ActionState, formData: FormData): 
   const demotingOrDeactivating = existing.role === "ADMIN" && (data.role !== "ADMIN" || !data.active);
   if (demotingOrDeactivating) {
     if (existing.id === admin.id) {
-      return { ok: false, message: "You cannot remove your own admin access. Ask another administrator." };
+      return withValues({ ok: false, message: "You cannot remove your own admin access. Ask another administrator." }, formData);
     }
     const otherAdmins = await prisma.user.count({ where: { role: "ADMIN", active: true, id: { not: userId } } });
-    if (otherAdmins === 0) return { ok: false, message: "At least one active administrator is required" };
+    if (otherAdmins === 0) return withValues({ ok: false, message: "At least one active administrator is required" }, formData);
   }
 
-  const emailTaken = await prisma.user.findFirst({ where: { email: data.email, id: { not: userId } } });
-  if (emailTaken) return { ok: false, fieldErrors: { email: "Another user already has this email" } };
+  const usernameTaken = await prisma.user.findFirst({ where: { username: data.username, id: { not: userId } } });
+  if (usernameTaken) return withValues({ ok: false, fieldErrors: { username: "Another user already has this username" } }, formData);
+  if (data.email) {
+    const emailTaken = await prisma.user.findFirst({ where: { email: data.email, id: { not: userId } } });
+    if (emailTaken) return withValues({ ok: false, fieldErrors: { email: "Another user already has this email" } }, formData);
+  }
 
-  await prisma.user.update({ where: { id: userId }, data });
+  await prisma.user.update({ where: { id: userId }, data: { ...data, email: data.email ?? null } });
   await writeAuditLog({
     action: "USER_UPDATED",
     entityType: "User",
@@ -67,7 +76,7 @@ export async function updateUserAction(_prev: ActionState, formData: FormData): 
     userId: admin.id,
     ipAddress: await getRequestIp(),
     details: {
-      before: { name: existing.name, email: existing.email, role: existing.role, active: existing.active },
+      before: { name: existing.name, username: existing.username, email: existing.email, role: existing.role, active: existing.active },
       after: data,
     },
   });
