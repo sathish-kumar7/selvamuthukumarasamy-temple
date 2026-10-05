@@ -8,7 +8,10 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    // DATABASE_URL is read from the environment only. Never commit it.
-    url: process.env["DATABASE_URL"],
+    // Used by the Prisma CLI only (migrate, studio); the app connects via DATABASE_URL in src/lib/db.ts.
+    // Migrations take a Postgres advisory lock, which does not work through Neon's PgBouncer pooler
+    // (P1002 lock timeouts), so prefer the DIRECT (non-pooled) connection string when provided.
+    // Both values come from the environment only. Never commit them.
+    url: process.env["DIRECT_DATABASE_URL"] ?? process.env["DATABASE_URL"],
   },
 });
