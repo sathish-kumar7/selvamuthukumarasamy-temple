@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { isoDateToUtcDate, monthStartIsoDate, todayIsoDate } from "@/lib/dates";
 import { donationInclude } from "@/lib/donations/service";
+import { PAGE_SIZE } from "@/lib/constants";
 import type { PaymentMethod } from "@/generated/prisma/enums";
 
 export interface ReportRange {
@@ -61,6 +62,25 @@ export async function getReportSummary(range: ReportRange): Promise<ReportSummar
       }))
       .sort((a, b) => Number(b.total) - Number(a.total)),
   };
+}
+
+/** One page of ACTIVE transactions for the range, oldest first, for the Reports table. */
+export async function listReportTransactions(range: ReportRange, page: number) {
+  const where = {
+    status: "ACTIVE" as const,
+    donationDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
+  };
+  const [total, items] = await Promise.all([
+    prisma.donation.count({ where }),
+    prisma.donation.findMany({
+      where,
+      include: donationInclude,
+      orderBy: [{ donationDate: "asc" }, { receiptNumber: "asc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  return { items, total, page, pageSize: PAGE_SIZE, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
 /** Full transaction list for the range, including cancelled rows flagged by status. */

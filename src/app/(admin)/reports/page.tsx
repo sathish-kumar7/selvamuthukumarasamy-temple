@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Download } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { can } from "@/lib/auth/permissions";
-import { getReportSummary, getReportTransactions, resolveReportRange } from "@/lib/reports/query";
+import { getReportSummary, listReportTransactions, resolveReportRange, type ReportRange } from "@/lib/reports/query";
 import { reportRangeSchema } from "@/lib/validation/report";
 import { formatINR } from "@/lib/money";
 import { formatDonationDate, formatIsoDate } from "@/lib/dates";
@@ -16,12 +16,11 @@ import { Table, TableWrapper, Td, Th } from "@/components/ui/table";
 import { PaymentMethodBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ReportRangeForm } from "@/components/reports/report-range-form";
+import { Pagination } from "@/components/ui/pagination";
 import Link from "next/link";
 import type { PaymentMethod } from "@/generated/prisma/enums";
 
 export const metadata: Metadata = { title: "Reports" };
-
-const TABLE_LIMIT = 500;
 
 export default async function ReportsPage(props: PageProps<"/reports">) {
   const [user, searchParams] = await Promise.all([requireUser(), props.searchParams]);
@@ -31,8 +30,10 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
   const parsed = reportRangeSchema.safeParse(flat);
   const rangeError = parsed.success ? null : parsed.error.issues[0]?.message ?? "Invalid date range";
   const range = resolveReportRange(parsed.success ? parsed.data : {});
+  const page = parsed.success ? parsed.data.page : 1;
 
-  const [summary, transactions] = await Promise.all([getReportSummary(range), getReportTransactions(range, { limit: TABLE_LIMIT })]);
+  const [summary, result] = await Promise.all([getReportSummary(range), listReportTransactions(range, page)]);
+  const transactions = result.items;
   const exportHref = `/api/reports/export?format=csv&from=${range.from}&to=${range.to}`;
   const rangeLabel = range.from === range.to ? formatIsoDate(range.from) : `${formatIsoDate(range.from)} – ${formatIsoDate(range.to)}`;
 
@@ -96,11 +97,9 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-stone-900">Transactions</h2>
-            {transactions.length >= TABLE_LIMIT ? (
-              <p className="text-xs text-stone-500">Showing first {TABLE_LIMIT}. Export CSV for the full list.</p>
-            ) : (
-              <p className="text-xs text-stone-500">{transactions.length} active receipt{transactions.length === 1 ? "" : "s"}</p>
-            )}
+            <p className="text-xs text-stone-500">
+              {result.total} active receipt{result.total === 1 ? "" : "s"} · export CSV for the full list
+            </p>
           </div>
           <TableWrapper>
             {transactions.length === 0 ? (
@@ -130,7 +129,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
                     </li>
                   ))}
                   <li className="flex items-center justify-between bg-stone-50 px-4 py-3 font-semibold">
-                    <span className="text-stone-600">Total ({summary.count})</span>
+                    <span className="text-stone-600">Period total ({summary.count})</span>
                     <span className="tabular-nums">{formatINR(summary.total)}</span>
                   </li>
                 </ul>
@@ -170,7 +169,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
                   <tfoot>
                     <tr className="bg-stone-50 font-semibold">
                       <Td colSpan={7} className="text-right text-stone-600">
-                        Total ({summary.count})
+                        Period total ({summary.count})
                       </Td>
                       <Td className="text-right tabular-nums">{formatINR(summary.total)}</Td>
                     </tr>
@@ -179,8 +178,26 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
               </>
             )}
           </TableWrapper>
+          <Pagination
+            page={result.page}
+            pageCount={result.pageCount}
+            total={result.total}
+            pageSize={result.pageSize}
+            buildHref={(p) => buildReportHref(range, p)}
+          />
         </section>
       </div>
     </>
   );
+}
+
+/** Keeps the selected range in pagination links so paging never resets the report. */
+function buildReportHref(range: ReportRange, page: number): string {
+  const params = new URLSearchParams({ preset: range.preset });
+  if (range.preset === "custom") {
+    params.set("from", range.from);
+    params.set("to", range.to);
+  }
+  if (page > 1) params.set("page", String(page));
+  return `/reports?${params.toString()}`;
 }

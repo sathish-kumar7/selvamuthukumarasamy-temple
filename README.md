@@ -37,9 +37,9 @@ Production domain: **https://selvamuthukumarasamy.in**
 | Receipt | Tamil receipt-book layout (A5 landscape card), browser print, PDF download, public link protected by a 32-character random token |
 | Sharing | Web Share API, WhatsApp deep link with a pre-filled message, copy link, copy message |
 | Expenditures | Record temple spending with sequential voucher numbers (`EXP-2026-000001`), filterable list with running totals, today / month / year summaries and the balance against donations; edit and cancel (audited) for admins |
-| Donation history | Paginated table with search (name / mobile / receipt no.), date range, payment method, category and status filters |
+| Donation history | Paginated table (10 per page) with search (name / mobile / receipt no.), date range, payment method, category and status filters |
 | Corrections | Admins can edit (audited) or cancel (reason required, never deleted) receipts |
-| Reports | Today / this month / custom range, totals by payment method and category, transaction table, CSV export |
+| Reports | Today / this month / custom range, totals by payment method and category, paginated transaction table (10 per page), CSV export |
 | Settings | Temple details printed on receipts (Tamil + English name, registration no., signatory labels), receipt prefix, configurable donation and expense categories |
 | Users | Admins create staff, edit roles, deactivate accounts, reset passwords |
 
