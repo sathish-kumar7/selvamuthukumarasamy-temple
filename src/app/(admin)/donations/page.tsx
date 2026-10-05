@@ -44,8 +44,9 @@ export default async function DonationsPage(props: PageProps<"/donations">) {
   const filters = parseFilters(searchParams);
   const [result, categories] = await Promise.all([listDonations(filters), getAllCategories()]);
 
+  // Fixed-height layout: header and filters stay put, only the table scrolls.
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
         title="Donations"
         description="Search, filter and manage all recorded donations."
@@ -55,9 +56,9 @@ export default async function DonationsPage(props: PageProps<"/donations">) {
           </Button>
         }
       />
-      <div className="space-y-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
         <DonationFilterBar filters={filters} categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
-        <DonationsTable donations={result.items} canEdit={can(user.role, "donation:edit")} />
+        <DonationsTable donations={result.items} canEdit={can(user.role, "donation:edit")} fill />
         <Pagination
           page={result.page}
           pageCount={result.pageCount}
@@ -66,6 +67,6 @@ export default async function DonationsPage(props: PageProps<"/donations">) {
           buildHref={(page) => buildHref(filters, page)}
         />
       </div>
-    </>
+    </div>
   );
 }

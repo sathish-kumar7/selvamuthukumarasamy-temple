@@ -14,6 +14,8 @@ interface Props {
   donations: DonationWithRelations[];
   canEdit: boolean;
   compact?: boolean;
+  /** Fill the remaining height of a flex column and scroll inside the table instead of the page. */
+  fill?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
 }
@@ -89,7 +91,7 @@ function DonationCards({ donations, canEdit }: { donations: DonationWithRelation
   );
 }
 
-export function DonationsTable({ donations, canEdit, compact = false, emptyTitle, emptyDescription }: Props) {
+export function DonationsTable({ donations, canEdit, compact = false, fill = false, emptyTitle, emptyDescription }: Props) {
   if (donations.length === 0) {
     return (
       <TableWrapper>
@@ -103,10 +105,10 @@ export function DonationsTable({ donations, canEdit, compact = false, emptyTitle
   }
 
   return (
-    <TableWrapper>
+    <TableWrapper className={cn(fill && "min-h-0 flex-1 overflow-auto")}>
       <DonationCards donations={donations} canEdit={canEdit} />
       <Table className="hidden md:table">
-        <thead>
+        <thead className={cn(fill && "sticky top-0 z-10")}>
           <tr>
             <Th>Receipt</Th>
             <Th>Date</Th>
