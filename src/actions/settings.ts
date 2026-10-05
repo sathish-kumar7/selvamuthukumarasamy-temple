@@ -61,6 +61,61 @@ export async function updateCategoryAction(_prev: ActionState, formData: FormDat
   return { ok: true, message: "Category updated" };
 }
 
+export async function createExpenseCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const parsed = categorySchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
+
+  const duplicate = await prisma.expenseCategory.findFirst({
+    where: { name: { equals: parsed.data.name, mode: "insensitive" } },
+  });
+  if (duplicate) return withValues({ ok: false, fieldErrors: { name: "This category already exists" } }, formData);
+
+  const maxOrder = await prisma.expenseCategory.aggregate({ _max: { sortOrder: true } });
+  const category = await prisma.expenseCategory.create({
+    data: { name: parsed.data.name, sortOrder: (maxOrder._max.sortOrder ?? 0) + 1 },
+  });
+  await writeAuditLog({
+    action: "EXPENSE_CATEGORY_CREATED",
+    entityType: "ExpenseCategory",
+    entityId: category.id,
+    userId: admin.id,
+    ipAddress: await getRequestIp(),
+    details: { name: category.name },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/expenditures");
+  return { ok: true, message: `Added "${category.name}"` };
+}
+
+export async function updateExpenseCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const parsed = updateCategorySchema.safeParse(formDataToObject(formData));
+  if (!parsed.success) return withValues({ ok: false, fieldErrors: toFieldErrors(parsed.error) }, formData);
+  const { categoryId, ...data } = parsed.data;
+
+  const existing = await prisma.expenseCategory.findUnique({ where: { id: categoryId } });
+  if (!existing) return { ok: false, message: "Category not found" };
+
+  const duplicate = await prisma.expenseCategory.findFirst({
+    where: { name: { equals: data.name, mode: "insensitive" }, id: { not: categoryId } },
+  });
+  if (duplicate) return withValues({ ok: false, fieldErrors: { name: "Another category already has this name" } }, formData);
+
+  await prisma.expenseCategory.update({ where: { id: categoryId }, data });
+  await writeAuditLog({
+    action: "EXPENSE_CATEGORY_UPDATED",
+    entityType: "ExpenseCategory",
+    entityId: categoryId,
+    userId: admin.id,
+    ipAddress: await getRequestIp(),
+    details: { before: { name: existing.name, active: existing.active }, after: data },
+  });
+  revalidatePath("/settings");
+  revalidatePath("/expenditures");
+  return { ok: true, message: "Category updated" };
+}
+
 export async function updateTempleSettingsAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await requireAdmin();
   const parsed = templeSettingsSchema.safeParse(formDataToObject(formData));
