@@ -14,7 +14,7 @@ interface Props {
   canEdit: boolean;
   /** Sum of all ACTIVE expenses matching the current filters (all pages), shown in the footer. */
   total?: { amount: string; count: number };
-  /** Fill the remaining height of a flex column and scroll inside the table instead of the page. */
+  /** Fill the remaining height of a flex column and scroll inside the table instead of the page. The 42rem floor keeps about ten rows visible. */
   fill?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -53,7 +53,7 @@ export function ExpensesTable({ expenses, canEdit, total, fill = false, emptyTit
   }
 
   return (
-    <TableWrapper className={cn(fill && "min-h-48 flex-1 overflow-auto")}>
+    <TableWrapper className={cn(fill && "min-h-[42rem] flex-1 overflow-auto")}>
       {/* Card layout below md so the amount and actions stay visible without horizontal scrolling. */}
       <ul className="divide-y divide-stone-100 md:hidden">
         {expenses.map((e) => {

@@ -103,7 +103,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
               <p className="text-xs text-stone-500">{transactions.length} active receipt{transactions.length === 1 ? "" : "s"}</p>
             )}
           </div>
-          <TableWrapper className="min-h-48 flex-1 overflow-auto">
+          <TableWrapper className="min-h-[42rem] flex-1 overflow-auto">
             {transactions.length === 0 ? (
               <EmptyState title="No transactions" description="No active donations were recorded in this period." />
             ) : (
