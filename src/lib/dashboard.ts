@@ -1,71 +1,55 @@
 import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import { isoDateToUtcDate, monthStartIsoDate, todayIsoDate } from "@/lib/dates";
+import { currentIstYear, isoDateToUtcDate, monthStartIsoDate, todayIsoDate } from "@/lib/dates";
 import { donationInclude } from "@/lib/donations/service";
-import type { PaymentMethod } from "@/generated/prisma/enums";
 
 export interface DashboardStats {
   todayTotal: string;
   todayCount: number;
-  monthTotal: string;
+  monthDonations: string;
   monthCount: number;
-  todayByMethod: Record<PaymentMethod, string>;
-  /** Active expenses this month (see Expenditures). */
+  yearDonations: string;
+  yearCount: number;
+  /** Active expenses this month / this calendar year (see Expenditures). */
   monthExpenses: string;
-  /** Donations minus expenses this month; may be negative. */
+  yearExpenses: string;
+  /** Donations minus expenses; may be negative. */
   monthNet: string;
+  yearNet: string;
 }
-
-const EMPTY_METHODS: Record<PaymentMethod, string> = {
-  CASH: "0.00",
-  UPI: "0.00",
-  BANK_TRANSFER: "0.00",
-  CHEQUE: "0.00",
-  OTHER: "0.00",
-};
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const today = isoDateToUtcDate(todayIsoDate());
   const monthStart = isoDateToUtcDate(monthStartIsoDate());
+  const yearStart = new Date(Date.UTC(currentIstYear(), 0, 1));
+  const active = { status: "ACTIVE" as const };
 
-  const [todayAgg, monthAgg, byMethod, monthExpensesAgg] = await Promise.all([
-    prisma.donation.aggregate({
-      where: { status: "ACTIVE", donationDate: today },
-      _sum: { amount: true },
-      _count: { _all: true },
-    }),
-    prisma.donation.aggregate({
-      where: { status: "ACTIVE", donationDate: { gte: monthStart, lte: today } },
-      _sum: { amount: true },
-      _count: { _all: true },
-    }),
-    prisma.donation.groupBy({
-      by: ["paymentMethod"],
-      where: { status: "ACTIVE", donationDate: today },
-      _sum: { amount: true },
-    }),
-    prisma.expense.aggregate({
-      where: { status: "ACTIVE", expenseDate: { gte: monthStart, lte: today } },
-      _sum: { amount: true },
-    }),
+  const [todayAgg, monthAgg, yearAgg, monthExpensesAgg, yearExpensesAgg] = await Promise.all([
+    prisma.donation.aggregate({ where: { ...active, donationDate: today }, _sum: { amount: true }, _count: { _all: true } }),
+    prisma.donation.aggregate({ where: { ...active, donationDate: { gte: monthStart, lte: today } }, _sum: { amount: true }, _count: { _all: true } }),
+    prisma.donation.aggregate({ where: { ...active, donationDate: { gte: yearStart, lte: today } }, _sum: { amount: true }, _count: { _all: true } }),
+    prisma.expense.aggregate({ where: { ...active, expenseDate: { gte: monthStart, lte: today } }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { ...active, expenseDate: { gte: yearStart, lte: today } }, _sum: { amount: true } }),
   ]);
-  const monthDonations = new Prisma.Decimal(monthAgg._sum.amount ?? 0);
-  const monthExpenses = new Prisma.Decimal(monthExpensesAgg._sum.amount ?? 0);
 
-  const todayByMethod = { ...EMPTY_METHODS };
-  for (const row of byMethod) {
-    todayByMethod[row.paymentMethod] = row._sum.amount?.toString() ?? "0.00";
-  }
+  const dec = (value: Prisma.Decimal | null | undefined) => new Prisma.Decimal(value ?? 0);
+  const monthDonations = dec(monthAgg._sum.amount);
+  const yearDonations = dec(yearAgg._sum.amount);
+  const monthExpenses = dec(monthExpensesAgg._sum.amount);
+  const yearExpenses = dec(yearExpensesAgg._sum.amount);
 
   return {
-    todayTotal: todayAgg._sum.amount?.toString() ?? "0.00",
+    todayTotal: dec(todayAgg._sum.amount).toFixed(2),
     todayCount: todayAgg._count._all,
-    monthTotal: monthAgg._sum.amount?.toString() ?? "0.00",
+    monthDonations: monthDonations.toFixed(2),
     monthCount: monthAgg._count._all,
-    todayByMethod,
+    yearDonations: yearDonations.toFixed(2),
+    yearCount: yearAgg._count._all,
     monthExpenses: monthExpenses.toFixed(2),
+    yearExpenses: yearExpenses.toFixed(2),
     monthNet: monthDonations.minus(monthExpenses).toFixed(2),
+    yearNet: yearDonations.minus(yearExpenses).toFixed(2),
   };
 }
 

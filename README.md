@@ -31,7 +31,7 @@ Production domain: **https://selvamuthukumarasamy.in**
 | --- | --- |
 | Authentication | Username + password, bcrypt hashes, signed `httpOnly` session cookie (12 h), login rate limiting (5 attempts / 15 min), audit log of sign-ins |
 | Roles | `ADMIN` (everything) and `STAFF` (add/view donations, print/share receipts, view reports) |
-| Dashboard | Today's and this month's totals, receipt counts, today's split by payment method, recent donations |
+| Dashboard | Donations today / this month / this year, expenses this month / this year, balance (donations minus expenses), recent donations |
 | Add donation | Donor details, amount (with amount-in-words preview), purpose, payment method, reference, date, notes. Validated with Zod on client and server |
 | Receipt numbers | `SMT-2026-000001` – sequential per calendar year, allocated atomically in the database |
 | Receipt | Tamil receipt-book layout (A5 landscape card), browser print, PDF download, public link protected by a 32-character random token |
