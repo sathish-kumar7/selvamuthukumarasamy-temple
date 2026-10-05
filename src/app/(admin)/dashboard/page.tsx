@@ -25,7 +25,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   return (
     <>
       <PageHeader
-        title={`Namaste, ${user.name.split(" ")[0]}`}
+        title={user.role === "ADMIN" ? "Welcome Admin" : `Welcome ${user.name.split(" ")[0]}`}
         description={`Today is ${formatIsoDate(todayIsoDate())}. Here is the collection summary.`}
         actions={
           <Button href="/donations/new" size="lg">
