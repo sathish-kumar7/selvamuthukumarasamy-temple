@@ -3,6 +3,7 @@ import { isoDate } from "./common";
 
 export const reportRangeSchema = z
   .object({
+    type: z.enum(["donations", "expenses"]).default("donations"),
     preset: z.enum(["today", "month", "custom"]).default("today"),
     from: isoDate.optional(),
     to: isoDate.optional(),

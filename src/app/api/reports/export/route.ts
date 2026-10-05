@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { can } from "@/lib/auth/permissions";
 import { isValidIsoDate } from "@/lib/dates";
-import { getReportTransactions } from "@/lib/reports/query";
-import { exporters } from "@/lib/reports/export";
+import { getReportExpenses, getReportTransactions, type ReportType } from "@/lib/reports/query";
+import { expenseExporters, exporters } from "@/lib/reports/export";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -15,20 +15,31 @@ export async function GET(request: NextRequest) {
   const to = params.get("to") ?? "";
   const format = params.get("format") ?? "csv";
   const includeCancelled = params.get("includeCancelled") === "1";
+  const type: ReportType = params.get("type") === "expenses" ? "expenses" : "donations";
 
   if (!isValidIsoDate(from) || !isValidIsoDate(to) || from > to) {
     return NextResponse.json({ error: "Invalid date range" }, { status: 400 });
   }
-  const exporter = exporters[format];
-  if (!exporter) return NextResponse.json({ error: "Unsupported format" }, { status: 400 });
-
-  const rows = await getReportTransactions({ preset: "custom", from, to }, { includeCancelled });
-  const body = await exporter.build(rows);
-  const filename = `donations_${from}_to_${to}.${exporter.extension}`;
+  const range = { type, preset: "custom" as const, from, to };
+  let body: Uint8Array | string;
+  let extension: string;
+  let contentType: string;
+  if (type === "expenses") {
+    const exporter = expenseExporters[format];
+    if (!exporter) return NextResponse.json({ error: "Unsupported format" }, { status: 400 });
+    body = await exporter.build(await getReportExpenses(range, { includeCancelled }));
+    ({ extension, contentType } = exporter);
+  } else {
+    const exporter = exporters[format];
+    if (!exporter) return NextResponse.json({ error: "Unsupported format" }, { status: 400 });
+    body = await exporter.build(await getReportTransactions(range, { includeCancelled }));
+    ({ extension, contentType } = exporter);
+  }
+  const filename = `${type}_${from}_to_${to}.${extension}`;
 
   return new NextResponse(body as BodyInit, {
     headers: {
-      "Content-Type": exporter.contentType,
+      "Content-Type": contentType,
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },

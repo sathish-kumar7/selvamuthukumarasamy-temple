@@ -39,7 +39,7 @@ Production domain: **https://selvamuthukumarasamy.in**
 | Expenditures | Record temple spending with sequential voucher numbers (`EXP-2026-000001`), filterable list with running totals, today / month / year summaries and the balance against donations; edit and cancel (audited) for admins |
 | Donation history | Paginated table (10 per page) with search (name / mobile / receipt no.), date range, payment method, category and status filters |
 | Corrections | Admins can edit (audited) or cancel (reason required, never deleted) receipts |
-| Reports | Today / this month / custom range, totals by payment method and category, paginated transaction table (10 per page), CSV export |
+| Reports | Donations or Expenses view; today / this month / custom range; totals by payment method and category; paginated transaction table (10 per page); CSV export of either |
 | Settings | Temple details printed on receipts (Tamil + English name, registration no., signatory labels), receipt prefix, configurable donation and expense categories |
 | Users | Admins create staff, edit roles, deactivate accounts, reset passwords |
 
@@ -328,7 +328,6 @@ Neon database.
 ## Roadmap (version 2)
 
 - Excel (`.xlsx`) export – the exporter interface in `src/lib/reports/export.ts` is ready for it
-- Expense CSV export and an income-vs-expenditure statement on the Reports page
 - Audit-log viewer in the admin UI (data is already captured)
 - Donor directory page with per-donor history and autocomplete on the donation form
 - Official WhatsApp Business / SMS API delivery of receipts
