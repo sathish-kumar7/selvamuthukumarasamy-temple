@@ -1,6 +1,6 @@
 /**
- * Seed script: creates the initial ADMIN user, default donation categories and
- * the temple settings row.
+ * Seed script: creates the initial ADMIN user, default donation and expense
+ * categories and the temple settings row.
  *
  * The admin password is NEVER hardcoded. Provide it via environment variables:
  *
@@ -13,6 +13,17 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+
+const DEFAULT_EXPENSE_CATEGORIES = [
+  "Pooja Items & Flowers",
+  "Annadhanam Provisions",
+  "Electricity & Water",
+  "Salaries & Dakshina",
+  "Repairs & Maintenance",
+  "Festival Expenses",
+  "Office & Printing",
+  "Other",
+];
 
 const DEFAULT_CATEGORIES = [
   "General Donation",
@@ -70,6 +81,17 @@ async function main() {
       if (result.createdAt.getTime() > Date.now() - 5000) created += 1;
     }
     console.log(`Donation categories ready (${created} created, ${DEFAULT_CATEGORIES.length - created} already existed)`);
+
+    let expenseCreated = 0;
+    for (const [index, categoryName] of DEFAULT_EXPENSE_CATEGORIES.entries()) {
+      const result = await prisma.expenseCategory.upsert({
+        where: { name: categoryName },
+        update: {},
+        create: { name: categoryName, sortOrder: index + 1, active: true },
+      });
+      if (result.createdAt.getTime() > Date.now() - 5000) expenseCreated += 1;
+    }
+    console.log(`Expense categories ready (${expenseCreated} created, ${DEFAULT_EXPENSE_CATEGORIES.length - expenseCreated} already existed)`);
 
     await prisma.templeSettings.upsert({
       where: { id: 1 },

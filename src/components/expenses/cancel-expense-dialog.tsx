@@ -1,0 +1,78 @@
+"use client";
+
+import { useActionState, useEffect, useRef } from "react";
+import { Ban, X } from "lucide-react";
+import { cancelExpenseAction } from "@/actions/expenses";
+import { initialActionState } from "@/lib/validation/common";
+import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Field, Textarea } from "@/components/ui/form";
+import { Alert } from "@/components/ui/alert";
+
+interface Props {
+  expenseId: string;
+  voucherNumber: string;
+  amountLabel: string;
+  paidTo: string;
+}
+
+export function CancelExpenseDialog({ expenseId, voucherNumber, amountLabel, paidTo }: Props) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [state, action] = useActionState(cancelExpenseAction, initialActionState);
+
+  useEffect(() => {
+    if (state.message && !state.ok) dialogRef.current?.showModal();
+  }, [state]);
+
+  return (
+    <>
+      <Button variant="danger" onClick={() => dialogRef.current?.showModal()}>
+        <Ban className="size-4" aria-hidden /> Cancel expense
+      </Button>
+      <dialog
+        ref={dialogRef}
+        className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-stone-200 p-0 shadow-2xl backdrop:bg-stone-900/50"
+        aria-labelledby="cancel-expense-title"
+      >
+        <form action={action} className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="cancel-expense-title" className="text-lg font-semibold text-stone-900">
+                Cancel expense {voucherNumber}?
+              </h2>
+              <p className="mt-1 text-sm text-stone-600">
+                {amountLabel} paid to <span className="font-medium">{paidTo}</span> will be marked cancelled and excluded from all
+                totals. The record stays in the system for audit purposes and cannot be un-cancelled.
+              </p>
+            </div>
+            <button type="button" onClick={() => dialogRef.current?.close()} className="rounded-lg p-2 text-stone-500 hover:bg-stone-100" aria-label="Close">
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
+
+          {state.message && !state.ok ? (
+            <Alert tone="error" className="mt-4">
+              {state.message}
+            </Alert>
+          ) : null}
+
+          <input type="hidden" name="expenseId" value={expenseId} />
+          <div className="mt-5">
+            <Field label="Reason for cancellation" name="reason" required error={state.fieldErrors?.reason}>
+              <Textarea id="reason" name="reason" defaultValue={state.values?.reason ?? ""} required minLength={5} maxLength={500} rows={3} placeholder="e.g. Duplicate entry, wrong amount entered, bill was refunded" invalid={!!state.fieldErrors?.reason} />
+            </Field>
+          </div>
+
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => dialogRef.current?.close()}>
+              Keep expense
+            </Button>
+            <SubmitButton variant="danger" pendingText="Cancelling…">
+              Yes, cancel this expense
+            </SubmitButton>
+          </div>
+        </form>
+      </dialog>
+    </>
+  );
+}

@@ -27,6 +27,27 @@ export async function allocateReceiptNumber(
   return formatReceiptNumber(prefix, year, next);
 }
 
+/**
+ * Allocates the next expense voucher number for the year, using the same
+ * lock-free INSERT ... ON CONFLICT pattern against "ExpenseSequence".
+ */
+export async function allocateVoucherNumber(
+  tx: Prisma.TransactionClient,
+  year: number,
+  prefix: string,
+): Promise<string> {
+  const rows = await tx.$queryRaw<{ lastNumber: number }[]>`
+    INSERT INTO "ExpenseSequence" ("year", "lastNumber", "updatedAt")
+    VALUES (${year}, 1, NOW())
+    ON CONFLICT ("year")
+    DO UPDATE SET "lastNumber" = "ExpenseSequence"."lastNumber" + 1, "updatedAt" = NOW()
+    RETURNING "lastNumber"
+  `;
+  const next = rows[0]?.lastNumber;
+  if (!next) throw new Error("Failed to allocate voucher number");
+  return formatReceiptNumber(prefix, year, next);
+}
+
 export function formatReceiptNumber(prefix: string, year: number, sequence: number): string {
   return `${prefix}-${year}-${sequence.toString().padStart(SEQUENCE_PADDING, "0")}`;
 }
