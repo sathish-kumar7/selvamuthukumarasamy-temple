@@ -24,7 +24,10 @@ export async function proxy(request: NextRequest) {
   }
 
   const adminOnly =
-    pathname.startsWith("/users") || pathname.startsWith("/settings") || /^\/donations\/[^/]+\/edit/.test(pathname);
+    pathname.startsWith("/users") ||
+    pathname.startsWith("/settings") ||
+    /^\/donations\/[^/]+\/edit/.test(pathname) ||
+    /^\/expenditures\/[^/]+\/edit/.test(pathname);
   if (adminOnly && session.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.url));
   }

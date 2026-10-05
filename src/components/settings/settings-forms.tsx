@@ -2,7 +2,20 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { Pencil, Plus, X } from "lucide-react";
-import { createCategoryAction, updateCategoryAction, updateTempleSettingsAction } from "@/actions/settings";
+import {
+  createCategoryAction,
+  createExpenseCategoryAction,
+  updateCategoryAction,
+  updateExpenseCategoryAction,
+  updateTempleSettingsAction,
+} from "@/actions/settings";
+
+export type CategoryKind = "donation" | "expense";
+
+const CATEGORY_ACTIONS: Record<CategoryKind, { create: typeof createCategoryAction; update: typeof updateCategoryAction; placeholder: string }> = {
+  donation: { create: createCategoryAction, update: updateCategoryAction, placeholder: "New category name, e.g. Kumbabishekam" },
+  expense: { create: createExpenseCategoryAction, update: updateExpenseCategoryAction, placeholder: "New category name, e.g. Electricity" },
+};
 import { initialActionState } from "@/lib/validation/common";
 import type { TempleSettings } from "@/lib/settings";
 import { Button } from "@/components/ui/button";
@@ -18,7 +31,10 @@ export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
     <form action={action} className="space-y-5" noValidate>
       {state.message ? <Alert tone={state.ok ? "success" : "error"}>{state.message}</Alert> : null}
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Temple name" name="templeName" required error={errors.templeName} className="sm:col-span-2">
+        <Field label="Temple name (Tamil)" name="templeNameTamil" error={errors.templeNameTamil} className="sm:col-span-2" hint="Printed as the receipt headline. Leave blank to print only the English name.">
+          <Input id="templeNameTamil" name="templeNameTamil" defaultValue={v("templeNameTamil", settings.templeNameTamil ?? "")} className="font-tamil" invalid={!!errors.templeNameTamil} />
+        </Field>
+        <Field label="Temple name (English)" name="templeName" required error={errors.templeName} className="sm:col-span-2">
           <Input id="templeName" name="templeName" defaultValue={v("templeName", settings.templeName)} required invalid={!!errors.templeName} />
         </Field>
         <Field label="Address line 1" name="addressLine1" error={errors.addressLine1}>
@@ -36,14 +52,20 @@ export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
         <Field label="Website" name="website" error={errors.website}>
           <Input id="website" name="website" defaultValue={v("website", settings.website ?? "")} invalid={!!errors.website} placeholder="selvamuthukumarasamy.in" />
         </Field>
+        <Field label="Registration number" name="registrationNumber" error={errors.registrationNumber} hint="Trust registration number printed at the top-right of the receipt, e.g. BK4/207/2023.">
+          <Input id="registrationNumber" name="registrationNumber" defaultValue={v("registrationNumber", settings.registrationNumber ?? "")} invalid={!!errors.registrationNumber} />
+        </Field>
         <Field label="Receipt prefix" name="receiptPrefix" required error={errors.receiptPrefix} hint="Used in new receipt numbers, e.g. SMT-2026-000001. Changing it does not affect existing receipts.">
           <Input id="receiptPrefix" name="receiptPrefix" defaultValue={v("receiptPrefix", settings.receiptPrefix)} required maxLength={6} className="font-mono uppercase" invalid={!!errors.receiptPrefix} />
         </Field>
         <Field label="Thank-you message" name="thankYouMessage" required error={errors.thankYouMessage} className="sm:col-span-2">
           <Textarea id="thankYouMessage" name="thankYouMessage" defaultValue={v("thankYouMessage", settings.thankYouMessage)} rows={3} maxLength={500} invalid={!!errors.thankYouMessage} />
         </Field>
-        <Field label="Authorized signatory label" name="authorizedSignatory" required error={errors.authorizedSignatory}>
-          <Input id="authorizedSignatory" name="authorizedSignatory" defaultValue={v("authorizedSignatory", settings.authorizedSignatory)} required invalid={!!errors.authorizedSignatory} />
+        <Field label="Second signatory label" name="secondarySignatory" error={errors.secondarySignatory} hint="Optional. Printed under the left signature line, e.g. செயலாளர் (Secretary).">
+          <Input id="secondarySignatory" name="secondarySignatory" defaultValue={v("secondarySignatory", settings.secondarySignatory ?? "")} className="font-tamil" invalid={!!errors.secondarySignatory} />
+        </Field>
+        <Field label="Signatory label" name="authorizedSignatory" required error={errors.authorizedSignatory} hint="Printed under the right signature line, e.g. தலைவர் (President).">
+          <Input id="authorizedSignatory" name="authorizedSignatory" defaultValue={v("authorizedSignatory", settings.authorizedSignatory)} required className="font-tamil" invalid={!!errors.authorizedSignatory} />
         </Field>
       </div>
       <div className="flex justify-end">
@@ -53,8 +75,8 @@ export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
   );
 }
 
-export function AddCategoryForm() {
-  const [state, action] = useActionState(createCategoryAction, initialActionState);
+export function AddCategoryForm({ kind = "donation" }: { kind?: CategoryKind }) {
+  const [state, action] = useActionState(CATEGORY_ACTIONS[kind].create, initialActionState);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state.ok) formRef.current?.reset();
@@ -62,7 +84,7 @@ export function AddCategoryForm() {
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-3 sm:flex-row sm:items-start" noValidate>
       <div className="flex-1">
-        <Input id="name" name="name" defaultValue={state.ok ? "" : (state.values?.name ?? "")} placeholder="New category name, e.g. Kumbabishekam" aria-label="New category name" required maxLength={80} invalid={!!state.fieldErrors?.name} />
+        <Input id="name" name="name" defaultValue={state.ok ? "" : (state.values?.name ?? "")} placeholder={CATEGORY_ACTIONS[kind].placeholder} aria-label="New category name" required maxLength={80} invalid={!!state.fieldErrors?.name} />
         {state.fieldErrors?.name ? <p className="mt-1.5 text-sm text-red-600" role="alert">{state.fieldErrors.name}</p> : null}
         {state.ok && state.message ? <p className="mt-1.5 text-sm text-emerald-700">{state.message}</p> : null}
       </div>
@@ -73,9 +95,9 @@ export function AddCategoryForm() {
   );
 }
 
-export function EditCategoryDialog({ category }: { category: { id: string; name: string; active: boolean } }) {
+export function EditCategoryDialog({ category, kind = "donation" }: { category: { id: string; name: string; active: boolean }; kind?: CategoryKind }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [state, action] = useActionState(updateCategoryAction, initialActionState);
+  const [state, action] = useActionState(CATEGORY_ACTIONS[kind].update, initialActionState);
   useEffect(() => {
     if (state.ok) ref.current?.close();
     else if (state.message || state.fieldErrors) ref.current?.showModal();
@@ -99,7 +121,7 @@ export function EditCategoryDialog({ category }: { category: { id: string; name:
             <Field label="Name" name="name" required error={state.fieldErrors?.name}>
               <Input id="name" name="name" defaultValue={state.values?.name ?? category.name} required maxLength={80} invalid={!!state.fieldErrors?.name} />
             </Field>
-            <Field label="Status" name="active" hint="Inactive categories are hidden from the donation form but keep their history.">
+            <Field label="Status" name="active" hint={`Inactive categories are hidden from the ${kind} form but keep their history.`}>
               <Select id="active" name="active" defaultValue={state.values?.active ?? String(category.active)}>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>

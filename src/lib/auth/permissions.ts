@@ -6,6 +6,10 @@ export type Permission =
   | "donation:edit"
   | "donation:cancel"
   | "report:view"
+  | "expense:create"
+  | "expense:view"
+  | "expense:edit"
+  | "expense:cancel"
   | "user:manage"
   | "settings:manage";
 
@@ -16,10 +20,14 @@ const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
     "donation:edit",
     "donation:cancel",
     "report:view",
+    "expense:create",
+    "expense:view",
+    "expense:edit",
+    "expense:cancel",
     "user:manage",
     "settings:manage",
   ]),
-  STAFF: new Set<Permission>(["donation:create", "donation:view", "report:view"]),
+  STAFF: new Set<Permission>(["donation:create", "donation:view", "report:view", "expense:create", "expense:view"]),
 };
 
 export function can(role: Role, permission: Permission): boolean {
