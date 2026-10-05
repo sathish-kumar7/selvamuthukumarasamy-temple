@@ -18,7 +18,10 @@ export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
     <form action={action} className="space-y-5" noValidate>
       {state.message ? <Alert tone={state.ok ? "success" : "error"}>{state.message}</Alert> : null}
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Temple name" name="templeName" required error={errors.templeName} className="sm:col-span-2">
+        <Field label="Temple name (Tamil)" name="templeNameTamil" error={errors.templeNameTamil} className="sm:col-span-2" hint="Printed as the receipt headline. Leave blank to print only the English name.">
+          <Input id="templeNameTamil" name="templeNameTamil" defaultValue={v("templeNameTamil", settings.templeNameTamil ?? "")} className="font-tamil" invalid={!!errors.templeNameTamil} />
+        </Field>
+        <Field label="Temple name (English)" name="templeName" required error={errors.templeName} className="sm:col-span-2">
           <Input id="templeName" name="templeName" defaultValue={v("templeName", settings.templeName)} required invalid={!!errors.templeName} />
         </Field>
         <Field label="Address line 1" name="addressLine1" error={errors.addressLine1}>
@@ -36,14 +39,20 @@ export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
         <Field label="Website" name="website" error={errors.website}>
           <Input id="website" name="website" defaultValue={v("website", settings.website ?? "")} invalid={!!errors.website} placeholder="selvamuthukumarasamy.in" />
         </Field>
+        <Field label="Registration number" name="registrationNumber" error={errors.registrationNumber} hint="Trust registration number printed at the top-right of the receipt, e.g. BK4/207/2023.">
+          <Input id="registrationNumber" name="registrationNumber" defaultValue={v("registrationNumber", settings.registrationNumber ?? "")} invalid={!!errors.registrationNumber} />
+        </Field>
         <Field label="Receipt prefix" name="receiptPrefix" required error={errors.receiptPrefix} hint="Used in new receipt numbers, e.g. SMT-2026-000001. Changing it does not affect existing receipts.">
           <Input id="receiptPrefix" name="receiptPrefix" defaultValue={v("receiptPrefix", settings.receiptPrefix)} required maxLength={6} className="font-mono uppercase" invalid={!!errors.receiptPrefix} />
         </Field>
         <Field label="Thank-you message" name="thankYouMessage" required error={errors.thankYouMessage} className="sm:col-span-2">
           <Textarea id="thankYouMessage" name="thankYouMessage" defaultValue={v("thankYouMessage", settings.thankYouMessage)} rows={3} maxLength={500} invalid={!!errors.thankYouMessage} />
         </Field>
-        <Field label="Authorized signatory label" name="authorizedSignatory" required error={errors.authorizedSignatory}>
-          <Input id="authorizedSignatory" name="authorizedSignatory" defaultValue={v("authorizedSignatory", settings.authorizedSignatory)} required invalid={!!errors.authorizedSignatory} />
+        <Field label="Second signatory label" name="secondarySignatory" error={errors.secondarySignatory} hint="Optional. Printed under the left signature line, e.g. செயலாளர் (Secretary).">
+          <Input id="secondarySignatory" name="secondarySignatory" defaultValue={v("secondarySignatory", settings.secondarySignatory ?? "")} className="font-tamil" invalid={!!errors.secondarySignatory} />
+        </Field>
+        <Field label="Signatory label" name="authorizedSignatory" required error={errors.authorizedSignatory} hint="Printed under the right signature line, e.g. தலைவர் (President).">
+          <Input id="authorizedSignatory" name="authorizedSignatory" defaultValue={v("authorizedSignatory", settings.authorizedSignatory)} required className="font-tamil" invalid={!!errors.authorizedSignatory} />
         </Field>
       </div>
       <div className="flex justify-end">

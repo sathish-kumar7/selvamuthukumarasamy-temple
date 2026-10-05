@@ -50,3 +50,16 @@ export function amountInWords(value: string): string {
   }
   return `${result || "Rupees Zero"} Only`;
 }
+
+/**
+ * Words without the "Rupees … Only" wrapper, for the receipt line
+ * "அவர்களிடமிருந்து ரூபாய் <words> மட்டும்": "1001.50" -> "One Thousand One and Fifty Paise".
+ */
+export function amountInWordsBare(value: string): string {
+  const { rupees, paise } = splitAmount(value);
+  const rupeeWords = integerToIndianWords(rupees);
+  const parts: string[] = [];
+  if (rupeeWords) parts.push(rupeeWords);
+  if (paise > 0) parts.push(`${integerToIndianWords(paise)} Paise`);
+  return parts.join(" and ") || "Zero";
+}

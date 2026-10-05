@@ -34,12 +34,12 @@ Production domain: **https://selvamuthukumarasamy.in**
 | Dashboard | Today's and this month's totals, receipt counts, today's split by payment method, recent donations |
 | Add donation | Donor details, amount (with amount-in-words preview), purpose, payment method, reference, date, notes. Validated with Zod on client and server |
 | Receipt numbers | `SMT-2026-000001` – sequential per calendar year, allocated atomically in the database |
-| Receipt | A4 print layout, PDF download, public link protected by a 32-character random token |
+| Receipt | Tamil receipt-book layout (A5 landscape card), browser print, PDF download, public link protected by a 32-character random token |
 | Sharing | Web Share API, WhatsApp deep link with a pre-filled message, copy link, copy message |
 | Donation history | Paginated table with search (name / mobile / receipt no.), date range, payment method, category and status filters |
 | Corrections | Admins can edit (audited) or cancel (reason required, never deleted) receipts |
 | Reports | Today / this month / custom range, totals by payment method and category, transaction table, CSV export |
-| Settings | Temple details printed on receipts, receipt prefix, configurable donation categories |
+| Settings | Temple details printed on receipts (Tamil + English name, registration no., signatory labels), receipt prefix, configurable donation categories |
 | Users | Admins create staff, edit roles, deactivate accounts, reset passwords |
 
 ## Stack
@@ -193,7 +193,7 @@ src/
     auth/                Sessions (jose), passwords (bcrypt), permissions, rate limiting
     donations/service.ts Create / update / cancel / list donations (transactions + audit)
     reports/             Report queries and export formats (CSV now, Excel later)
-    pdf/                 React-PDF receipt template and bundled Noto Sans fonts
+    pdf/                 React-PDF receipt template and bundled Noto Sans / Noto Sans Tamil fonts
     validation/          Zod schemas shared by client and server
     receipt-number.ts    Atomic per-year sequence allocation
     amount-in-words.ts   Indian numbering (lakh / crore) words
@@ -220,7 +220,7 @@ Tamil heading, name and location lines are in `src/lib/branding.ts`.
 | `Donation` | One receipt | `receiptNumber` (unique), `amount` `DECIMAL(12,2)`, `paymentMethod`, `donationDate` `DATE`, `status` (ACTIVE/CANCELLED), `publicReceiptToken` (unique), `createdById`, `updatedById`, `cancelledAt/By/Reason` |
 | `ReceiptSequence` | One row per year | `year` (PK), `lastNumber` |
 | `AuditLog` | Who did what | `action`, `entityType`, `entityId`, `userId`, `details` (JSON diff), `ipAddress` |
-| `TempleSettings` | Singleton (id = 1) | Temple name, address, contact, `receiptPrefix`, thank-you message, signatory label |
+| `TempleSettings` | Singleton (id = 1) | Temple name (English + Tamil), registration number, address, contact, `receiptPrefix`, thank-you message, signatory labels |
 
 Indexes exist on receipt number, donation date, donor mobile, donor name, status, payment method,
 category, created-at and audit entity/user.

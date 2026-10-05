@@ -13,6 +13,8 @@ export const updateCategorySchema = z.object({
 
 export const templeSettingsSchema = z.object({
   templeName: trimmedString.min(2, "Temple name is required").max(120),
+  templeNameTamil: optionalTrimmed(160),
+  registrationNumber: optionalTrimmed(60),
   addressLine1: optionalTrimmed(200),
   addressLine2: optionalTrimmed(200),
   phone: optionalTrimmed(40),
@@ -25,4 +27,5 @@ export const templeSettingsSchema = z.object({
     .transform((v) => v.toUpperCase()),
   thankYouMessage: trimmedString.min(5).max(500),
   authorizedSignatory: trimmedString.min(2).max(80),
+  secondarySignatory: optionalTrimmed(80),
 });

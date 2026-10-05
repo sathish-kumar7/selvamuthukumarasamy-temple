@@ -153,6 +153,10 @@ model AuditLog {
 model TempleSettings {
   id                   Int      @id @default(1)
   templeName           String   @default("Selva Muthukumarasamy Temple")
+  /// Tamil name printed as the receipt headline (English name is printed beneath it).
+  templeNameTamil      String?  @default("அருள்மிகு வள்ளி தெய்வானை உடனமர் செல்வமுத்துகுமார சுவாமி திருக்கோவில்")
+  /// Trust / society registration number printed at the top-right of the receipt.
+  registrationNumber   String?
   addressLine1         String?
   addressLine2         String?
   phone                String?
@@ -161,5 +165,7 @@ model TempleSettings {
   receiptPrefix        String   @default("SMT")
   thankYouMessage      String   @default("Thank you for your generous donation. May the blessings of Lord Muthukumarasamy be with you and your family.")
   authorizedSignatory  String   @default("Authorized Signatory")
+  /// Optional second signature line printed to the left of the main one (e.g. Secretary).
+  secondarySignatory   String?
   updatedAt            DateTime @updatedAt
 }

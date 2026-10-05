@@ -3,6 +3,11 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-tamil: var(--font-noto-tamil), "Noto Sans Tamil", "Nirmala UI", "Latha", "Tamil MN", sans-serif;
+
+  /* Printed receipt: brick-red ink on paper, matching the temple's receipt book. */
+  --color-receipt-ink: #8c2130;
+  --color-receipt-paper: #fffdf9;
 
   /* Temple-inspired but restrained: saffron primary, maroon accent. */
   --color-saffron-50: #fff8ed;
@@ -54,9 +59,10 @@ button {
 }
 
 @media print {
+  /* Receipts print on an A5 landscape card (fits half an A4 sheet). */
   @page {
-    size: A4;
-    margin: 12mm;
+    size: A5 landscape;
+    margin: 7mm;
   }
   html,
   body {
@@ -71,10 +77,15 @@ button {
   }
   .print-receipt {
     box-shadow: none !important;
-    border: none !important;
+    width: 196mm !important;
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
   a[href]::after {
     content: none !important;
