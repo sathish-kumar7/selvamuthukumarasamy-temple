@@ -76,9 +76,11 @@ export function AppShell({ user, templeName, children }: Props) {
   );
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
-      <aside className="print-hidden hidden w-64 shrink-0 flex-col border-r border-stone-200 bg-white lg:flex">
+    // The shell fills the viewport and only the content column scrolls, so the
+    // sidebar stays put. Print restores normal flow so receipts are not clipped.
+    <div className="flex h-dvh overflow-hidden print:h-auto print:overflow-visible">
+      {/* Desktop sidebar: fixed to the viewport; scrolls internally only if the window is very short. */}
+      <aside className="print-hidden hidden h-full w-64 shrink-0 flex-col overflow-y-auto border-r border-stone-200 bg-white lg:flex">
         <div className="flex items-center gap-3 px-5 py-5">
           <TempleMark className="size-10 text-saffron-700" />
           <div className="min-w-0">
@@ -110,8 +112,8 @@ export function AppShell({ user, templeName, children }: Props) {
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto print:overflow-visible">
+        {/* Mobile top bar (sticky within the scrolling column) */}
         <header className="print-hidden sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-stone-200 bg-white/95 px-4 backdrop-blur lg:hidden">
           <button type="button" onClick={() => setOpen(true)} className="-ml-2 rounded-lg p-2 hover:bg-stone-100" aria-label="Open menu">
             <Menu className="size-6" aria-hidden />
