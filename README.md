@@ -100,8 +100,10 @@ createdb smt_temple
 5. Optional but recommended: create a separate Neon **branch** named `dev` for local development so
    you never test against production data.
 
-Prisma Migrate works with the pooled URL. If you ever see advisory-lock errors during
-`prisma migrate deploy`, use the **direct** (non-pooled) connection string for that one command.
+Prisma Migrate needs a Postgres advisory lock, which is unreliable through the pooled URL
+(PgBouncer) and shows up as `P1002 … pg_advisory_lock … timed out`. Set `DIRECT_DATABASE_URL` to
+Neon's **direct** connection string (same as the pooled one without `-pooler` in the host); the
+Prisma CLI uses it for migrations while the app keeps using the pooled `DATABASE_URL`.
 
 ## Environment variables
 
@@ -273,7 +275,8 @@ Confirm `.env` is **not** in the commit: `git ls-files | grep -c '^\.env$'` must
 
 1. At <https://vercel.com/new> import the GitHub repository. Framework preset: **Next.js** (auto-detected).
 2. Under **Environment Variables** add for *Production* (and *Preview* if you use a Neon dev branch):
-   - `DATABASE_URL` – Neon pooled connection string
+   - `DATABASE_URL` – Neon pooled connection string (used by the app)
+   - `DIRECT_DATABASE_URL` – Neon direct connection string (used by `prisma migrate deploy` during the build)
    - `AUTH_SECRET` – output of `openssl rand -base64 48`
    - `NEXT_PUBLIC_APP_URL` – `https://selvamuthukumarasamy.in`
 3. Build command stays `npm run build`. It runs `prisma migrate deploy` first, so every deploy applies
