@@ -122,10 +122,8 @@ export function AppShell({ user, templeName, children }: Props) {
           <p className="truncate text-sm font-semibold text-stone-900">{templeName}</p>
         </header>
 
-        {/* Flex chain with min-h-0 lets a page opt into a fixed-height layout (e.g. a table that
-            scrolls on its own) while ordinary pages still overflow into the scrolling column. */}
-        <main className="flex min-h-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <div className="mx-auto flex w-full min-h-0 max-w-6xl flex-1 flex-col">{children}</div>
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
       </div>
     </div>

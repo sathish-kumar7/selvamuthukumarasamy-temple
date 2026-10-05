@@ -48,9 +48,8 @@ export default async function ExpendituresPage(props: PageProps<"/expenditures">
   const monthNetNegative = summary.monthNet.startsWith("-");
   const yearNetNegative = summary.yearNet.startsWith("-");
 
-  // Fixed-height layout: header, summary and filters stay put, only the table scrolls.
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <>
       <PageHeader
         title="Expenditures"
         description="Record what the temple spends and compare it with donations received. Cancelled entries are excluded from totals."
@@ -80,16 +79,15 @@ export default async function ExpendituresPage(props: PageProps<"/expenditures">
         />
       </section>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="space-y-4">
         <ExpenseFilterBar filters={filters} categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
         <ExpensesTable
           expenses={result.items}
           canEdit={can(user.role, "expense:edit")}
           total={{ amount: result.filteredTotal, count: result.filteredCount }}
-          fill
         />
         <Pagination page={result.page} pageCount={result.pageCount} total={result.total} pageSize={result.pageSize} buildHref={(page) => buildHref(filters, page)} />
       </div>
-    </div>
+    </>
   );
 }

@@ -36,9 +36,8 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
   const exportHref = `/api/reports/export?format=csv&from=${range.from}&to=${range.to}`;
   const rangeLabel = range.from === range.to ? formatIsoDate(range.from) : `${formatIsoDate(range.from)} – ${formatIsoDate(range.to)}`;
 
-  // Fixed-height layout: everything above the transactions table stays put; the table scrolls.
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <>
       <PageHeader
         title="Reports"
         description={`Collections for ${rangeLabel}. Cancelled receipts are excluded from totals.`}
@@ -49,11 +48,11 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
         }
       />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <div className="space-y-6">
         <ReportRangeForm range={range} />
         {rangeError ? <Alert tone="error">{rangeError}</Alert> : null}
 
-        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           <StatCard label="Total donations" value={formatINR(summary.total)} sub={`${summary.count} receipt${summary.count === 1 ? "" : "s"}`} accent />
           <StatCard label="Number of donations" value={String(summary.count)} />
           {(["CASH", "UPI", "BANK_TRANSFER", "CHEQUE", "OTHER"] as PaymentMethod[]).map((m) => (
@@ -94,7 +93,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
           )}
         </Card>
 
-        <section className="flex min-h-0 flex-1 flex-col">
+        <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-stone-900">Transactions</h2>
             {transactions.length >= TABLE_LIMIT ? (
@@ -103,7 +102,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
               <p className="text-xs text-stone-500">{transactions.length} active receipt{transactions.length === 1 ? "" : "s"}</p>
             )}
           </div>
-          <TableWrapper className="min-h-[48rem] flex-1 overflow-auto">
+          <TableWrapper>
             {transactions.length === 0 ? (
               <EmptyState title="No transactions" description="No active donations were recorded in this period." />
             ) : (
@@ -136,7 +135,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
                   </li>
                 </ul>
                 <Table className="hidden md:table">
-                  <thead className="sticky top-0 z-10">
+                  <thead>
                     <tr>
                       <Th>Receipt</Th>
                       <Th>Date</Th>
@@ -168,7 +167,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="sticky bottom-0 z-10">
+                  <tfoot>
                     <tr className="bg-stone-50 font-semibold">
                       <Td colSpan={7} className="text-right text-stone-600">
                         Total ({summary.count})
@@ -182,6 +181,6 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
           </TableWrapper>
         </section>
       </div>
-    </div>
+    </>
   );
 }
