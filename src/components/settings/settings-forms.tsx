@@ -2,7 +2,20 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { Pencil, Plus, X } from "lucide-react";
-import { createCategoryAction, updateCategoryAction, updateTempleSettingsAction } from "@/actions/settings";
+import {
+  createCategoryAction,
+  createExpenseCategoryAction,
+  updateCategoryAction,
+  updateExpenseCategoryAction,
+  updateTempleSettingsAction,
+} from "@/actions/settings";
+
+export type CategoryKind = "donation" | "expense";
+
+const CATEGORY_ACTIONS: Record<CategoryKind, { create: typeof createCategoryAction; update: typeof updateCategoryAction; placeholder: string }> = {
+  donation: { create: createCategoryAction, update: updateCategoryAction, placeholder: "New category name, e.g. Kumbabishekam" },
+  expense: { create: createExpenseCategoryAction, update: updateExpenseCategoryAction, placeholder: "New category name, e.g. Electricity" },
+};
 import { initialActionState } from "@/lib/validation/common";
 import type { TempleSettings } from "@/lib/settings";
 import { Button } from "@/components/ui/button";
@@ -62,8 +75,8 @@ export function TempleSettingsForm({ settings }: { settings: TempleSettings }) {
   );
 }
 
-export function AddCategoryForm() {
-  const [state, action] = useActionState(createCategoryAction, initialActionState);
+export function AddCategoryForm({ kind = "donation" }: { kind?: CategoryKind }) {
+  const [state, action] = useActionState(CATEGORY_ACTIONS[kind].create, initialActionState);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
     if (state.ok) formRef.current?.reset();
@@ -71,7 +84,7 @@ export function AddCategoryForm() {
   return (
     <form ref={formRef} action={action} className="flex flex-col gap-3 sm:flex-row sm:items-start" noValidate>
       <div className="flex-1">
-        <Input id="name" name="name" defaultValue={state.ok ? "" : (state.values?.name ?? "")} placeholder="New category name, e.g. Kumbabishekam" aria-label="New category name" required maxLength={80} invalid={!!state.fieldErrors?.name} />
+        <Input id="name" name="name" defaultValue={state.ok ? "" : (state.values?.name ?? "")} placeholder={CATEGORY_ACTIONS[kind].placeholder} aria-label="New category name" required maxLength={80} invalid={!!state.fieldErrors?.name} />
         {state.fieldErrors?.name ? <p className="mt-1.5 text-sm text-red-600" role="alert">{state.fieldErrors.name}</p> : null}
         {state.ok && state.message ? <p className="mt-1.5 text-sm text-emerald-700">{state.message}</p> : null}
       </div>
@@ -82,9 +95,9 @@ export function AddCategoryForm() {
   );
 }
 
-export function EditCategoryDialog({ category }: { category: { id: string; name: string; active: boolean } }) {
+export function EditCategoryDialog({ category, kind = "donation" }: { category: { id: string; name: string; active: boolean }; kind?: CategoryKind }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [state, action] = useActionState(updateCategoryAction, initialActionState);
+  const [state, action] = useActionState(CATEGORY_ACTIONS[kind].update, initialActionState);
   useEffect(() => {
     if (state.ok) ref.current?.close();
     else if (state.message || state.fieldErrors) ref.current?.showModal();
@@ -108,7 +121,7 @@ export function EditCategoryDialog({ category }: { category: { id: string; name:
             <Field label="Name" name="name" required error={state.fieldErrors?.name}>
               <Input id="name" name="name" defaultValue={state.values?.name ?? category.name} required maxLength={80} invalid={!!state.fieldErrors?.name} />
             </Field>
-            <Field label="Status" name="active" hint="Inactive categories are hidden from the donation form but keep their history.">
+            <Field label="Status" name="active" hint={`Inactive categories are hidden from the ${kind} form but keep their history.`}>
               <Select id="active" name="active" defaultValue={state.values?.active ?? String(category.active)}>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>

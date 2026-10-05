@@ -36,10 +36,11 @@ Production domain: **https://selvamuthukumarasamy.in**
 | Receipt numbers | `SMT-2026-000001` – sequential per calendar year, allocated atomically in the database |
 | Receipt | Tamil receipt-book layout (A5 landscape card), browser print, PDF download, public link protected by a 32-character random token |
 | Sharing | Web Share API, WhatsApp deep link with a pre-filled message, copy link, copy message |
+| Expenditures | Record temple spending with sequential voucher numbers (`EXP-2026-000001`), filterable list with running totals, today / month / year summaries and the balance against donations; edit and cancel (audited) for admins |
 | Donation history | Paginated table with search (name / mobile / receipt no.), date range, payment method, category and status filters |
 | Corrections | Admins can edit (audited) or cancel (reason required, never deleted) receipts |
 | Reports | Today / this month / custom range, totals by payment method and category, transaction table, CSV export |
-| Settings | Temple details printed on receipts (Tamil + English name, registration no., signatory labels), receipt prefix, configurable donation categories |
+| Settings | Temple details printed on receipts (Tamil + English name, registration no., signatory labels), receipt prefix, configurable donation and expense categories |
 | Users | Admins create staff, edit roles, deactivate accounts, reset passwords |
 
 ## Stack
@@ -219,6 +220,9 @@ Tamil heading, name and location lines are in `src/lib/branding.ts`.
 | `DonationCategory` | Configurable purposes | `name` (unique), `active`, `sortOrder` |
 | `Donation` | One receipt | `receiptNumber` (unique), `amount` `DECIMAL(12,2)`, `paymentMethod`, `donationDate` `DATE`, `status` (ACTIVE/CANCELLED), `publicReceiptToken` (unique), `createdById`, `updatedById`, `cancelledAt/By/Reason` |
 | `ReceiptSequence` | One row per year | `year` (PK), `lastNumber` |
+| `ExpenseCategory` | Expense heads | `name` (unique), `active`, `sortOrder` |
+| `Expense` | One payment | `voucherNumber` (unique), `paidTo`, `description`, `amount` `DECIMAL(12,2)`, `paymentMethod`, `expenseDate` `DATE`, `status` (ACTIVE/CANCELLED), audit columns like `Donation` |
+| `ExpenseSequence` | One row per year | `year` (PK), `lastNumber` |
 | `AuditLog` | Who did what | `action`, `entityType`, `entityId`, `userId`, `details` (JSON diff), `ipAddress` |
 | `TempleSettings` | Singleton (id = 1) | Temple name (English + Tamil), registration number, address, contact, `receiptPrefix`, thank-you message, signatory labels |
 
@@ -320,6 +324,7 @@ Neon database.
 ## Roadmap (version 2)
 
 - Excel (`.xlsx`) export – the exporter interface in `src/lib/reports/export.ts` is ready for it
+- Expense CSV export and an income-vs-expenditure statement on the Reports page
 - Audit-log viewer in the admin UI (data is already captured)
 - Donor directory page with per-donor history and autocomplete on the donation form
 - Official WhatsApp Business / SMS API delivery of receipts

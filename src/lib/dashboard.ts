@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { isoDateToUtcDate, monthStartIsoDate, todayIsoDate } from "@/lib/dates";
 import { donationInclude } from "@/lib/donations/service";
@@ -10,6 +11,10 @@ export interface DashboardStats {
   monthTotal: string;
   monthCount: number;
   todayByMethod: Record<PaymentMethod, string>;
+  /** Active expenses this month (see Expenditures). */
+  monthExpenses: string;
+  /** Donations minus expenses this month; may be negative. */
+  monthNet: string;
 }
 
 const EMPTY_METHODS: Record<PaymentMethod, string> = {
@@ -24,7 +29,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const today = isoDateToUtcDate(todayIsoDate());
   const monthStart = isoDateToUtcDate(monthStartIsoDate());
 
-  const [todayAgg, monthAgg, byMethod] = await Promise.all([
+  const [todayAgg, monthAgg, byMethod, monthExpensesAgg] = await Promise.all([
     prisma.donation.aggregate({
       where: { status: "ACTIVE", donationDate: today },
       _sum: { amount: true },
@@ -40,7 +45,13 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       where: { status: "ACTIVE", donationDate: today },
       _sum: { amount: true },
     }),
+    prisma.expense.aggregate({
+      where: { status: "ACTIVE", expenseDate: { gte: monthStart, lte: today } },
+      _sum: { amount: true },
+    }),
   ]);
+  const monthDonations = new Prisma.Decimal(monthAgg._sum.amount ?? 0);
+  const monthExpenses = new Prisma.Decimal(monthExpensesAgg._sum.amount ?? 0);
 
   const todayByMethod = { ...EMPTY_METHODS };
   for (const row of byMethod) {
@@ -53,6 +64,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     monthTotal: monthAgg._sum.amount?.toString() ?? "0.00",
     monthCount: monthAgg._count._all,
     todayByMethod,
+    monthExpenses: monthExpenses.toFixed(2),
+    monthNet: monthDonations.minus(monthExpenses).toFixed(2),
   };
 }
 

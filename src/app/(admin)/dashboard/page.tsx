@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Banknote, CalendarDays, IndianRupee, Landmark, ReceiptText, Smartphone } from "lucide-react";
+import { Banknote, CalendarDays, IndianRupee, Landmark, ReceiptText, Scale, Smartphone, Wallet } from "lucide-react";
 import { requireUser } from "@/lib/auth/current-user";
 import { can } from "@/lib/auth/permissions";
 import { getDashboardStats, getRecentDonations } from "@/lib/dashboard";
@@ -49,6 +49,22 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
         <StatCard label="Bank transfer today" value={formatINR(stats.todayByMethod.BANK_TRANSFER)} icon={<Landmark className="size-5" aria-hidden />} />
         <StatCard label="Cheque today" value={formatINR(stats.todayByMethod.CHEQUE)} />
         <StatCard label="Other today" value={formatINR(stats.todayByMethod.OTHER)} />
+      </section>
+
+      <section aria-label="Expenses" className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard label="Spent this month" value={formatINR(stats.monthExpenses)} sub="Active expenses this month" icon={<Wallet className="size-5" aria-hidden />} />
+        <StatCard
+          label="Balance this month"
+          value={formatINR(stats.monthNet)}
+          sub={<span className={stats.monthNet.startsWith("-") ? "font-medium text-red-600" : "font-medium text-emerald-700"}>{stats.monthNet.startsWith("-") ? "Expenses exceed donations" : "Donations minus expenses"}</span>}
+          icon={<Scale className="size-5" aria-hidden />}
+        />
+        <div className="col-span-2 flex items-center justify-between rounded-xl border border-dashed border-stone-300 px-4 py-3 text-sm text-stone-600">
+          <span>Record and review temple spending on the Expenditures page.</span>
+          <Button href="/expenditures" variant="outline" size="sm">
+            Open
+          </Button>
+        </div>
       </section>
 
       <section className="mt-8">

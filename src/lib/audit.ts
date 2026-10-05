@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 
 export interface AuditEntry {
   action: AuditAction;
-  entityType: "Donation" | "User" | "DonationCategory" | "TempleSettings" | "Auth";
+  entityType: "Donation" | "Expense" | "User" | "DonationCategory" | "ExpenseCategory" | "TempleSettings" | "Auth";
   entityId?: string | null;
   userId?: string | null;
   details?: Prisma.InputJsonValue;
