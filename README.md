@@ -272,14 +272,18 @@ Confirm `.env` is **not** in the commit: `git ls-files | grep -c '^\.env$'` must
    - `DATABASE_URL` – Neon pooled connection string
    - `AUTH_SECRET` – output of `openssl rand -base64 48`
    - `NEXT_PUBLIC_APP_URL` – `https://selvamuthukumarasamy.in`
-3. Build command stays `npm run build` (it runs `prisma generate`). Install command: `npm install`.
+3. Build command stays `npm run build`. It runs `prisma migrate deploy` first, so every deploy applies
+   pending migrations to `DATABASE_URL` before building, then `prisma generate` and `next build`.
+   Install command: `npm install`.
 4. Click **Deploy**.
-5. Apply migrations to Neon from your machine (first deploy and after any schema change):
+5. Because migrations run at build time, Preview deployments migrate whatever database their
+   `DATABASE_URL` points at. Either give Preview its own Neon branch (see step 7) or keep
+   `DATABASE_URL` set for Production only. All migrations in this repo are additive, so a preview
+   running them against production is harmless, but a separate branch is cleaner. To apply
+   migrations by hand instead:
    ```bash
    DATABASE_URL='<neon pooled url>' npm run db:migrate:deploy
    ```
-   If you prefer migrations to run automatically, set the Vercel build command to
-   `prisma migrate deploy && npm run build` – but only if Preview deployments use a separate database.
 6. Seed the production admin once, from your machine, against the Neon URL (see *Seeding*).
 7. Optionally install the [Neon Vercel integration](https://vercel.com/integrations/neon) to have
    `DATABASE_URL` managed automatically and get a database branch per preview deployment.
