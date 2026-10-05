@@ -14,6 +14,8 @@ interface Props {
   canEdit: boolean;
   /** Sum of all ACTIVE expenses matching the current filters (all pages), shown in the footer. */
   total?: { amount: string; count: number };
+  /** Fill the remaining height of a flex column and scroll inside the table instead of the page. */
+  fill?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
 }
@@ -37,7 +39,7 @@ function RowActions({ e, canEdit }: { e: ExpenseWithRelations; canEdit: boolean 
   );
 }
 
-export function ExpensesTable({ expenses, canEdit, total, emptyTitle, emptyDescription }: Props) {
+export function ExpensesTable({ expenses, canEdit, total, fill = false, emptyTitle, emptyDescription }: Props) {
   if (expenses.length === 0) {
     return (
       <TableWrapper>
@@ -51,7 +53,7 @@ export function ExpensesTable({ expenses, canEdit, total, emptyTitle, emptyDescr
   }
 
   return (
-    <TableWrapper>
+    <TableWrapper className={cn(fill && "min-h-48 flex-1 overflow-auto")}>
       {/* Card layout below md so the amount and actions stay visible without horizontal scrolling. */}
       <ul className="divide-y divide-stone-100 md:hidden">
         {expenses.map((e) => {
@@ -93,7 +95,7 @@ export function ExpensesTable({ expenses, canEdit, total, emptyTitle, emptyDescr
       </ul>
 
       <Table className="hidden md:table">
-        <thead>
+        <thead className={cn(fill && "sticky top-0 z-10")}>
           <tr>
             <Th>Voucher</Th>
             <Th>Date</Th>
@@ -142,7 +144,7 @@ export function ExpensesTable({ expenses, canEdit, total, emptyTitle, emptyDescr
           })}
         </tbody>
         {total ? (
-          <tfoot>
+          <tfoot className={cn(fill && "sticky bottom-0 z-10")}>
             <tr className="bg-stone-50 font-semibold">
               <Td colSpan={5} className="text-right text-stone-600">
                 Total of {total.count} active expense{total.count === 1 ? "" : "s"} matching filters

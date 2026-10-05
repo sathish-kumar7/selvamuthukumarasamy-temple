@@ -105,7 +105,7 @@ export function DonationsTable({ donations, canEdit, compact = false, fill = fal
   }
 
   return (
-    <TableWrapper className={cn(fill && "min-h-0 flex-1 overflow-auto")}>
+    <TableWrapper className={cn(fill && "min-h-48 flex-1 overflow-auto")}>
       <DonationCards donations={donations} canEdit={canEdit} />
       <Table className="hidden md:table">
         <thead className={cn(fill && "sticky top-0 z-10")}>
