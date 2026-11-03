@@ -5,6 +5,7 @@ import { can } from "@/lib/auth/permissions";
 import { getAllExpenseCategories, getExpenseSummary, listExpenses } from "@/lib/expenses/service";
 import { expenseFiltersSchema, type ExpenseFilters } from "@/lib/validation/expense";
 import { isValidIsoDate } from "@/lib/dates";
+import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import { formatINR } from "@/lib/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ function parseFilters(searchParams: Record<string, string | string[] | undefined
   return filters;
 }
 
-function buildHref(filters: ExpenseFilters, page: number): string {
+function buildHref(filters: ExpenseFilters, page: number, size = filters.size): string {
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
   if (filters.from) params.set("from", filters.from);
@@ -36,6 +37,7 @@ function buildHref(filters: ExpenseFilters, page: number): string {
   if (filters.paymentMethod) params.set("paymentMethod", filters.paymentMethod);
   if (filters.categoryId) params.set("categoryId", filters.categoryId);
   if (filters.status !== "ALL") params.set("status", filters.status);
+  if (size !== PAGE_SIZE) params.set("size", String(size));
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
   return qs ? `/expenditures?${qs}` : "/expenditures";
@@ -86,7 +88,15 @@ export default async function ExpendituresPage(props: PageProps<"/expenditures">
           canEdit={can(user.role, "expense:edit")}
           total={{ amount: result.filteredTotal, count: result.filteredCount }}
         />
-        <Pagination page={result.page} pageCount={result.pageCount} total={result.total} pageSize={result.pageSize} buildHref={(page) => buildHref(filters, page)} />
+        <Pagination
+          page={result.page}
+          pageCount={result.pageCount}
+          total={result.total}
+          pageSize={result.pageSize}
+          buildHref={(page) => buildHref(filters, page)}
+          pageSizes={PAGE_SIZE_OPTIONS}
+          buildSizeHref={(size) => buildHref(filters, 1, size)}
+        />
       </div>
     </>
   );

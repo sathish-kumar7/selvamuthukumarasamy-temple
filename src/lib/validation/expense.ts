@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { amount, isoDate, optionalTrimmed, trimmedString } from "./common";
+import { amount, isoDate, optionalTrimmed, pageSize, trimmedString } from "./common";
 import { paymentMethodValues } from "./donation";
 
 export const expenseSchema = z.object({
@@ -27,6 +27,7 @@ export const expenseFiltersSchema = z.object({
   paymentMethod: z.enum(paymentMethodValues).optional().or(z.literal("")).default(""),
   categoryId: z.string().trim().optional().default(""),
   status: z.enum(["ACTIVE", "CANCELLED", "ALL"]).optional().default("ALL"),
+  size: pageSize,
   page: z.coerce.number().int().min(1).optional().default(1),
 });
 

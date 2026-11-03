@@ -35,6 +35,7 @@ export function ReportFilters({ range, categories }: { range: ReportRange; categ
   return (
     <form ref={formRef} method="get" action="/reports" className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap">
       <input type="hidden" name="type" value={range.type} />
+      <input type="hidden" name="size" value={range.pageSize} />
       <div>
         <Label htmlFor="preset">Period</Label>
         <Select

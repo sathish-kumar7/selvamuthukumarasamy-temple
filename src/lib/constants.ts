@@ -4,6 +4,8 @@ export const SESSION_COOKIE = "smt_session";
 export const SESSION_DURATION_SECONDS = 12 * 60 * 60; // 12 hours
 /** Rows per page in every paginated table (donations, expenditures, report transactions). */
 export const PAGE_SIZE = 10;
+/** Rows-per-page choices offered by the per-page picker (Reports, Donations). */
+export const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 /** Prefix for expense voucher numbers, e.g. EXP-2026-000001. */
 export const EXPENSE_VOUCHER_PREFIX = "EXP";
 export const IST_TIME_ZONE = "Asia/Kolkata";

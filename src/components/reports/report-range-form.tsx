@@ -3,6 +3,7 @@ import { IndianRupee, Wallet } from "lucide-react";
 import type { ReportRange, ReportType } from "@/lib/reports/query";
 import { ReportFilters } from "./report-filters";
 import { cn } from "@/lib/cn";
+import { PAGE_SIZE } from "@/lib/constants";
 
 /**
  * Builds a /reports URL for the given type and preset, keeping a custom range when switching type.
@@ -21,6 +22,7 @@ export function reportHref(range: ReportRange, overrides: Partial<Pick<ReportRan
     params.set("by", range.filter.by);
     params.set("value", range.filter.value);
   }
+  if (range.pageSize !== PAGE_SIZE) params.set("size", String(range.pageSize));
   if (page > 1) params.set("page", String(page));
   return `/reports?${params.toString()}`;
 }
