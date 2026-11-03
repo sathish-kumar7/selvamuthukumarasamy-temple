@@ -21,6 +21,11 @@ export function monthStartIsoDate(): string {
   return `${year}-${pad2(month)}-01`;
 }
 
+/** First day of the current IST year as YYYY-MM-DD. */
+export function yearStartIsoDate(): string {
+  return `${istDateParts().year}-01-01`;
+}
+
 /** Current IST year (used for receipt sequences). */
 export function currentIstYear(): number {
   return istDateParts().year;

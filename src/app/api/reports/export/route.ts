@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { can } from "@/lib/auth/permissions";
 import { isValidIsoDate } from "@/lib/dates";
-import { getReportExpenses, getReportTransactions, type ReportType } from "@/lib/reports/query";
+import { getReportExpenses, getReportTransactions, resolveReportRange, type ReportType } from "@/lib/reports/query";
 import { expenseExporters, exporters } from "@/lib/reports/export";
 
 export async function GET(request: NextRequest) {
@@ -16,11 +16,16 @@ export async function GET(request: NextRequest) {
   const format = params.get("format") ?? "csv";
   const includeCancelled = params.get("includeCancelled") === "1";
   const type: ReportType = params.get("type") === "expenses" ? "expenses" : "donations";
+  const filters = resolveReportRange({
+    type,
+    by: params.get("by") ?? undefined,
+    value: params.get("value") ?? undefined,
+  });
 
   if (!isValidIsoDate(from) || !isValidIsoDate(to) || from > to) {
     return NextResponse.json({ error: "Invalid date range" }, { status: 400 });
   }
-  const range = { type, preset: "custom" as const, from, to };
+  const range = { ...filters, preset: "custom" as const, from, to };
   let body: Uint8Array | string;
   let extension: string;
   let contentType: string;
