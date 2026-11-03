@@ -14,7 +14,10 @@ import {
 } from "@/lib/reports/query";
 import type { DonationWithRelations } from "@/lib/donations/service";
 import type { ExpenseWithRelations } from "@/lib/expenses/service";
+import { getAllCategories } from "@/lib/donations/service";
+import { getAllExpenseCategories } from "@/lib/expenses/service";
 import { reportRangeSchema } from "@/lib/validation/report";
+import { findReportFilter } from "@/lib/reports/filters";
 import { formatINR } from "@/lib/money";
 import { formatDonationDate, formatIsoDate } from "@/lib/dates";
 import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
@@ -41,19 +44,26 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
   const flat = Object.fromEntries(Object.entries(searchParams).filter(([, v]) => typeof v === "string")) as Record<string, string>;
   const parsed = reportRangeSchema.safeParse(flat);
   const rangeError = parsed.success ? null : parsed.error.issues[0]?.message ?? "Invalid date range";
-  const range = resolveReportRange(parsed.success ? parsed.data : { type: flat.type });
+  const range = resolveReportRange(parsed.success ? parsed.data : { type: flat.type, by: flat.by, value: flat.value });
   const page = parsed.success ? parsed.data.page : 1;
   const isExpenses = range.type === "expenses";
 
-  const exportHref = `/api/reports/export?format=csv&type=${range.type}&from=${range.from}&to=${range.to}`;
+  const exportParams = new URLSearchParams({ format: "csv", type: range.type, from: range.from, to: range.to });
+  if (range.filter) {
+    exportParams.set("by", range.filter.by);
+    exportParams.set("value", range.filter.value);
+  }
+  const exportHref = `/api/reports/export?${exportParams.toString()}`;
   const rangeLabel = range.from === range.to ? formatIsoDate(range.from) : `${formatIsoDate(range.from)} – ${formatIsoDate(range.to)}`;
   const noun = isExpenses ? "expense" : "receipt";
   const plural = (n: number) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
-  // Load the summary and the first page of rows for whichever report is selected.
-  const [summary, rows] = isExpenses
-    ? await Promise.all([getExpenseReportSummary(range), listReportExpenses(range, page)])
-    : await Promise.all([getReportSummary(range), listReportTransactions(range, page)]);
+  // Load the summary, the current page of rows and the category list for whichever report is selected.
+  // All categories (not just active ones) so past periods can still be filtered by a retired category.
+  const [summary, rows, categories] = isExpenses
+    ? await Promise.all([getExpenseReportSummary(range), listReportExpenses(range, page), getAllExpenseCategories()])
+    : await Promise.all([getReportSummary(range), listReportTransactions(range, page), getAllCategories()]);
+  const scope = describeFilter(range, categories);
 
   return (
     <>
@@ -61,8 +71,8 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
         title="Reports"
         description={
           isExpenses
-            ? `Expenses for ${rangeLabel}. Cancelled expenses are excluded from totals.`
-            : `Collections for ${rangeLabel}. Cancelled receipts are excluded from totals.`
+            ? `Expenses${scope} for ${rangeLabel}. Cancelled expenses are excluded from totals.`
+            : `Collections${scope} for ${rangeLabel}. Cancelled receipts are excluded from totals.`
         }
         actions={
           <a href={exportHref} className={buttonClasses("outline")} download>
@@ -72,7 +82,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
       />
 
       <div className="space-y-6">
-        <ReportRangeForm range={range} />
+        <ReportRangeForm range={range} categories={categories} />
         {rangeError ? <Alert tone="error">{rangeError}</Alert> : null}
 
         <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
@@ -109,6 +119,16 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
       </div>
     </>
   );
+}
+
+/** Short phrase for the page description, e.g. " in Annadhanam" or " with donor name matching “Kumar”". */
+function describeFilter(range: ReportRange, categories: { id: string; name: string }[]): string {
+  if (!range.filter) return "";
+  const { by, value } = range.filter;
+  if (by === "category") return ` in ${categories.find((c) => c.id === value)?.name ?? "the selected category"}`;
+  if (by === "payment") return ` paid by ${PAYMENT_METHOD_LABELS[value] ?? value}`;
+  const label = findReportFilter(range.type, by)?.label.toLowerCase() ?? by;
+  return ` with ${label} matching “${value}”`;
 }
 
 function CategoryTotals({ summary, noun, emptyTitle }: { summary: ReportSummary; noun: string; emptyTitle: string }) {
@@ -175,6 +195,7 @@ function DonationRows({ items, summary }: { items: DonationWithRelations[]; summ
                 <p className="mt-0.5 truncate font-medium text-stone-900">{d.donor.name}</p>
                 <p className="text-xs text-stone-500">
                   {d.donor.mobile} · {formatDonationDate(d.donationDate)}
+                  {d.manualReceiptNumber ? ` · Manual: ${d.manualReceiptNumber}` : ""}
                 </p>
               </div>
               <p className="shrink-0 text-lg font-semibold tabular-nums text-stone-900">{formatINR(d.amount)}</p>
@@ -195,6 +216,7 @@ function DonationRows({ items, summary }: { items: DonationWithRelations[]; summ
         <thead>
           <tr>
             <Th>Receipt</Th>
+            <Th className="hidden lg:table-cell">Manual no.</Th>
             <Th>Date</Th>
             <Th>Donor</Th>
             <Th className="hidden lg:table-cell">Mobile</Th>
@@ -212,6 +234,7 @@ function DonationRows({ items, summary }: { items: DonationWithRelations[]; summ
                   {d.receiptNumber}
                 </Link>
               </Td>
+              <Td className="hidden whitespace-nowrap font-mono text-sm text-stone-600 lg:table-cell">{d.manualReceiptNumber ?? "—"}</Td>
               <Td className="whitespace-nowrap">{formatDonationDate(d.donationDate)}</Td>
               <Td className="max-w-[14rem] truncate font-medium">{d.donor.name}</Td>
               <Td className="hidden font-mono text-xs lg:table-cell">{d.donor.mobile}</Td>
@@ -224,7 +247,7 @@ function DonationRows({ items, summary }: { items: DonationWithRelations[]; summ
             </tr>
           ))}
         </tbody>
-        <PeriodTotalRow summary={summary} colSpan={7} />
+        <PeriodTotalRow summary={summary} colSpan={8} />
       </Table>
     </>
   );

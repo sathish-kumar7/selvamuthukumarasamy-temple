@@ -36,6 +36,7 @@ export default async function NewDonationPage() {
           paymentMethod: "CASH",
           transactionReference: "",
           donationDate: todayIsoDate(),
+          manualReceiptNumber: "",
           notes: "",
         }}
       />

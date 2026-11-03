@@ -1,26 +1,76 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { isoDateToUtcDate, monthStartIsoDate, todayIsoDate } from "@/lib/dates";
+import { isoDateToUtcDate, monthStartIsoDate, todayIsoDate, yearStartIsoDate } from "@/lib/dates";
 import { donationInclude } from "@/lib/donations/service";
 import { expenseInclude } from "@/lib/expenses/service";
 import { PAGE_SIZE } from "@/lib/constants";
 import type { PaymentMethod } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
+import { findReportFilter, type ReportFilterKey } from "./filters";
 
 export type ReportType = "donations" | "expenses";
 
 export interface ReportRange {
   type: ReportType;
-  preset: "today" | "month" | "custom";
+  preset: "today" | "month" | "year" | "custom";
   from: string; // YYYY-MM-DD
   to: string; // YYYY-MM-DD
+  /** Single optional filter chosen from "Filter by" (see REPORT_FILTERS). */
+  filter?: { by: ReportFilterKey; value: string };
 }
 
-export function resolveReportRange(input: { type?: string; preset?: string; from?: string; to?: string }): ReportRange {
+const PAYMENT_METHODS: readonly string[] = ["CASH", "UPI", "BANK_TRANSFER", "CHEQUE", "OTHER"] satisfies PaymentMethod[];
+
+export function resolveReportRange(input: { type?: string; preset?: string; from?: string; to?: string; by?: string; value?: string }): ReportRange {
   const today = todayIsoDate();
   const type: ReportType = input.type === "expenses" ? "expenses" : "donations";
-  if (input.preset === "month") return { type, preset: "month", from: monthStartIsoDate(), to: today };
-  if (input.preset === "custom" && input.from && input.to) return { type, preset: "custom", from: input.from, to: input.to };
-  return { type, preset: "today", from: today, to: today };
+  const option = findReportFilter(type, input.by);
+  const value = input.value?.trim();
+  const valid = option && value && (option.kind !== "payment" || PAYMENT_METHODS.includes(value));
+  const filter = valid ? { filter: { by: option.key, value } } : {};
+  if (input.preset === "month") return { type, preset: "month", from: monthStartIsoDate(), to: today, ...filter };
+  if (input.preset === "year") return { type, preset: "year", from: yearStartIsoDate(), to: today, ...filter };
+  if (input.preset === "custom" && input.from && input.to) return { type, preset: "custom", from: input.from, to: input.to, ...filter };
+  return { type, preset: "today", from: today, to: today, ...filter };
+}
+
+const contains = (value: string) => ({ contains: value, mode: "insensitive" as const });
+
+function donationFilter(filter: ReportRange["filter"]): Prisma.DonationWhereInput {
+  if (!filter) return {};
+  const { by, value } = filter;
+  if (by === "category") return { categoryId: value };
+  if (by === "payment") return { paymentMethod: value as PaymentMethod };
+  if (by === "donor") return { donor: { name: contains(value) } };
+  if (by === "receipt") return { receiptNumber: contains(value) };
+  if (by === "manual") return { manualReceiptNumber: contains(value) };
+  return {};
+}
+
+function expenseFilter(filter: ReportRange["filter"]): Prisma.ExpenseWhereInput {
+  if (!filter) return {};
+  const { by, value } = filter;
+  if (by === "category") return { categoryId: value };
+  if (by === "payment") return { paymentMethod: value as PaymentMethod };
+  if (by === "paidTo") return { paidTo: contains(value) };
+  if (by === "voucher") return { voucherNumber: contains(value) };
+  return {};
+}
+
+function donationWhere(range: ReportRange) {
+  return {
+    status: "ACTIVE" as const,
+    donationDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
+    ...donationFilter(range.filter),
+  };
+}
+
+function expenseWhere(range: ReportRange) {
+  return {
+    status: "ACTIVE" as const,
+    expenseDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
+    ...expenseFilter(range.filter),
+  };
 }
 
 const EMPTY_METHODS = (): ReportSummary["byMethod"] => ({
@@ -39,10 +89,7 @@ export interface ReportSummary {
 }
 
 export async function getReportSummary(range: ReportRange): Promise<ReportSummary> {
-  const where = {
-    status: "ACTIVE" as const,
-    donationDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
-  };
+  const where = donationWhere(range);
   const [agg, byMethod, byCategory, categories] = await Promise.all([
     prisma.donation.aggregate({ where, _sum: { amount: true }, _count: { _all: true } }),
     prisma.donation.groupBy({ by: ["paymentMethod"], where, _sum: { amount: true }, _count: { _all: true } }),
@@ -73,10 +120,7 @@ export async function getReportSummary(range: ReportRange): Promise<ReportSummar
 
 /** Same shape as getReportSummary, for money paid out. Categories are expense categories. */
 export async function getExpenseReportSummary(range: ReportRange): Promise<ReportSummary> {
-  const where = {
-    status: "ACTIVE" as const,
-    expenseDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
-  };
+  const where = expenseWhere(range);
   const [agg, byMethod, byCategory, categories] = await Promise.all([
     prisma.expense.aggregate({ where, _sum: { amount: true }, _count: { _all: true } }),
     prisma.expense.groupBy({ by: ["paymentMethod"], where, _sum: { amount: true }, _count: { _all: true } }),
@@ -107,10 +151,7 @@ export async function getExpenseReportSummary(range: ReportRange): Promise<Repor
 
 /** One page of ACTIVE expenses for the range, oldest first, for the Reports table. */
 export async function listReportExpenses(range: ReportRange, page: number) {
-  const where = {
-    status: "ACTIVE" as const,
-    expenseDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
-  };
+  const where = expenseWhere(range);
   const [total, items] = await Promise.all([
     prisma.expense.count({ where }),
     prisma.expense.findMany({
@@ -127,10 +168,7 @@ export async function listReportExpenses(range: ReportRange, page: number) {
 /** Full expense list for the range (for export), optionally including cancelled rows. */
 export async function getReportExpenses(range: ReportRange, options?: { includeCancelled?: boolean }) {
   return prisma.expense.findMany({
-    where: {
-      ...(options?.includeCancelled ? {} : { status: "ACTIVE" }),
-      expenseDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
-    },
+    where: { ...expenseWhere(range), ...(options?.includeCancelled ? { status: undefined } : {}) },
     include: expenseInclude,
     orderBy: [{ expenseDate: "asc" }, { voucherNumber: "asc" }],
   });
@@ -138,10 +176,7 @@ export async function getReportExpenses(range: ReportRange, options?: { includeC
 
 /** One page of ACTIVE transactions for the range, oldest first, for the Reports table. */
 export async function listReportTransactions(range: ReportRange, page: number) {
-  const where = {
-    status: "ACTIVE" as const,
-    donationDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
-  };
+  const where = donationWhere(range);
   const [total, items] = await Promise.all([
     prisma.donation.count({ where }),
     prisma.donation.findMany({
@@ -158,10 +193,7 @@ export async function listReportTransactions(range: ReportRange, page: number) {
 /** Full transaction list for the range, including cancelled rows flagged by status. */
 export async function getReportTransactions(range: ReportRange, options?: { includeCancelled?: boolean; limit?: number }) {
   return prisma.donation.findMany({
-    where: {
-      ...(options?.includeCancelled ? {} : { status: "ACTIVE" }),
-      donationDate: { gte: isoDateToUtcDate(range.from), lte: isoDateToUtcDate(range.to) },
-    },
+    where: { ...donationWhere(range), ...(options?.includeCancelled ? { status: undefined } : {}) },
     include: donationInclude,
     orderBy: [{ donationDate: "asc" }, { receiptNumber: "asc" }],
     take: options?.limit,

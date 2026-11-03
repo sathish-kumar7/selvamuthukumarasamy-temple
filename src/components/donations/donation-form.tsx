@@ -24,6 +24,7 @@ export interface DonationFormValues {
   paymentMethod: PaymentMethod | "";
   transactionReference: string;
   donationDate: string;
+  manualReceiptNumber: string;
   notes: string;
 }
 
@@ -135,6 +136,9 @@ export function DonationForm({ action, categories, defaultValues, mode, cancelHr
           </Field>
           <Field label="Donation date" name="donationDate" required error={errors.donationDate}>
             <Input id="donationDate" name="donationDate" type="date" defaultValue={v("donationDate")} required invalid={!!errors.donationDate} />
+          </Field>
+          <Field label="Manual receipt no." name="manualReceiptNumber" error={errors.manualReceiptNumber} hint="Optional. Number from the paper receipt book, if one was written.">
+            <Input id="manualReceiptNumber" name="manualReceiptNumber" defaultValue={v("manualReceiptNumber")} autoComplete="off" maxLength={50} invalid={!!errors.manualReceiptNumber} />
           </Field>
           <Field label="Notes" name="notes" error={errors.notes} className="sm:col-span-2" hint="Internal only. Not printed on the receipt.">
             <Textarea id="notes" name="notes" defaultValue={v("notes")} maxLength={1000} invalid={!!errors.notes} rows={2} />
