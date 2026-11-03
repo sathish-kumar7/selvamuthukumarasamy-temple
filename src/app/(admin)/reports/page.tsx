@@ -20,7 +20,7 @@ import { reportRangeSchema } from "@/lib/validation/report";
 import { findReportFilter } from "@/lib/reports/filters";
 import { formatINR } from "@/lib/money";
 import { formatDonationDate, formatIsoDate } from "@/lib/dates";
-import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { PAYMENT_METHOD_LABELS, PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -44,7 +44,7 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
   const flat = Object.fromEntries(Object.entries(searchParams).filter(([, v]) => typeof v === "string")) as Record<string, string>;
   const parsed = reportRangeSchema.safeParse(flat);
   const rangeError = parsed.success ? null : parsed.error.issues[0]?.message ?? "Invalid date range";
-  const range = resolveReportRange(parsed.success ? parsed.data : { type: flat.type, by: flat.by, value: flat.value });
+  const range = resolveReportRange(parsed.success ? parsed.data : { type: flat.type, by: flat.by, value: flat.value, size: flat.size });
   const page = parsed.success ? parsed.data.page : 1;
   const isExpenses = range.type === "expenses";
 
@@ -114,7 +114,15 @@ export default async function ReportsPage(props: PageProps<"/reports">) {
               <DonationRows items={rows.items as DonationWithRelations[]} summary={summary} />
             )}
           </TableWrapper>
-          <Pagination page={rows.page} pageCount={rows.pageCount} total={rows.total} pageSize={rows.pageSize} buildHref={(p) => reportHref(range, {}, p)} />
+          <Pagination
+            page={rows.page}
+            pageCount={rows.pageCount}
+            total={rows.total}
+            pageSize={rows.pageSize}
+            buildHref={(p) => reportHref(range, {}, p)}
+            pageSizes={PAGE_SIZE_OPTIONS}
+            buildSizeHref={(size) => reportHref({ ...range, pageSize: size })}
+          />
         </section>
       </div>
     </>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { PaymentMethod } from "@/generated/prisma/enums";
-import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
+import { PAGE_SIZE, PAYMENT_METHOD_LABELS } from "@/lib/constants";
 import type { ExpenseFilters } from "@/lib/validation/expense";
 import { Input, Label, Select } from "@/components/ui/form";
 import { Button, buttonClasses } from "@/components/ui/button";
@@ -18,6 +18,7 @@ export function ExpenseFilterBar({ filters, categories }: Props) {
 
   return (
     <form method="get" action="/expenditures" className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+      {filters.size !== PAGE_SIZE ? <input type="hidden" name="size" value={filters.size} /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">
           <Label htmlFor="q">Search</Label>
@@ -31,7 +32,7 @@ export function ExpenseFilterBar({ filters, categories }: Props) {
             Search
           </Button>
           {hasFilters ? (
-            <Link href="/expenditures" className={buttonClasses("ghost")} title="Clear filters">
+            <Link href={filters.size !== PAGE_SIZE ? `/expenditures?size=${filters.size}` : "/expenditures"} className={buttonClasses("ghost")} title="Clear filters">
               <X className="size-4" aria-hidden /> Clear
             </Link>
           ) : null}

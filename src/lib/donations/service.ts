@@ -5,7 +5,6 @@ import { allocateReceiptNumber } from "@/lib/receipt-number";
 import { generateReceiptToken } from "@/lib/tokens";
 import { currentIstYear, isoDateToUtcDate } from "@/lib/dates";
 import { diffRecords, writeAuditLog } from "@/lib/audit";
-import { PAGE_SIZE } from "@/lib/constants";
 import type { DonationFilters, DonationInput } from "@/lib/validation/donation";
 import { getTempleSettings } from "@/lib/settings";
 
@@ -286,11 +285,11 @@ export async function listDonations(filters: DonationFilters) {
       where,
       include: donationInclude,
       orderBy: [{ donationDate: "desc" }, { createdAt: "desc" }],
-      skip: (filters.page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (filters.page - 1) * filters.size,
+      take: filters.size,
     }),
   ]);
-  return { items, total, page: filters.page, pageSize: PAGE_SIZE, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+  return { items, total, page: filters.page, pageSize: filters.size, pageCount: Math.max(1, Math.ceil(total / filters.size)) };
 }
 
 export async function getActiveCategories() {

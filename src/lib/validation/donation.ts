@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PaymentMethod } from "@/generated/prisma/enums";
-import { amount, indianMobile, isoDate, optionalEmail, optionalTrimmed, trimmedString } from "./common";
+import { amount, indianMobile, isoDate, optionalEmail, optionalTrimmed, pageSize, trimmedString } from "./common";
 
 export const paymentMethodValues = Object.values(PaymentMethod) as [PaymentMethod, ...PaymentMethod[]];
 
@@ -32,6 +32,7 @@ export const donationFiltersSchema = z.object({
   paymentMethod: z.enum(paymentMethodValues).optional().or(z.literal("")).default(""),
   categoryId: z.string().trim().optional().default(""),
   status: z.enum(["ACTIVE", "CANCELLED", "ALL"]).optional().default("ALL"),
+  size: pageSize,
   page: z.coerce.number().int().min(1).optional().default(1),
 });
 

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { allocateVoucherNumber } from "@/lib/receipt-number";
 import { currentIstYear, isoDateToUtcDate, monthStartIsoDate, todayIsoDate } from "@/lib/dates";
 import { diffRecords, writeAuditLog } from "@/lib/audit";
-import { EXPENSE_VOUCHER_PREFIX, PAGE_SIZE } from "@/lib/constants";
+import { EXPENSE_VOUCHER_PREFIX } from "@/lib/constants";
 import type { ExpenseFilters, ExpenseInput } from "@/lib/validation/expense";
 
 export const expenseInclude = {
@@ -191,8 +191,8 @@ export async function listExpenses(filters: ExpenseFilters) {
       where,
       include: expenseInclude,
       orderBy: [{ expenseDate: "desc" }, { createdAt: "desc" }],
-      skip: (filters.page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (filters.page - 1) * filters.size,
+      take: filters.size,
     }),
     prisma.expense.aggregate({ where: { ...where, status: "ACTIVE" }, _sum: { amount: true }, _count: { _all: true } }),
   ]);
@@ -200,8 +200,8 @@ export async function listExpenses(filters: ExpenseFilters) {
     items,
     total,
     page: filters.page,
-    pageSize: PAGE_SIZE,
-    pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+    pageSize: filters.size,
+    pageCount: Math.max(1, Math.ceil(total / filters.size)),
     filteredTotal: activeAgg._sum.amount?.toString() ?? "0.00",
     filteredCount: activeAgg._count._all,
   };

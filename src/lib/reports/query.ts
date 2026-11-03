@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { isoDateToUtcDate, monthStartIsoDate, todayIsoDate, yearStartIsoDate } from "@/lib/dates";
 import { donationInclude } from "@/lib/donations/service";
 import { expenseInclude } from "@/lib/expenses/service";
-import { PAGE_SIZE } from "@/lib/constants";
+import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import type { PaymentMethod } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { findReportFilter, type ReportFilterKey } from "./filters";
@@ -17,17 +17,29 @@ export interface ReportRange {
   to: string; // YYYY-MM-DD
   /** Single optional filter chosen from "Filter by" (see REPORT_FILTERS). */
   filter?: { by: ReportFilterKey; value: string };
+  /** Rows per page in the Reports table; one of PAGE_SIZE_OPTIONS. */
+  pageSize: number;
 }
 
 const PAYMENT_METHODS: readonly string[] = ["CASH", "UPI", "BANK_TRANSFER", "CHEQUE", "OTHER"] satisfies PaymentMethod[];
 
-export function resolveReportRange(input: { type?: string; preset?: string; from?: string; to?: string; by?: string; value?: string }): ReportRange {
+export function resolveReportRange(input: {
+  type?: string;
+  preset?: string;
+  from?: string;
+  to?: string;
+  by?: string;
+  value?: string;
+  size?: number | string;
+}): ReportRange {
   const today = todayIsoDate();
   const type: ReportType = input.type === "expenses" ? "expenses" : "donations";
   const option = findReportFilter(type, input.by);
   const value = input.value?.trim();
   const valid = option && value && (option.kind !== "payment" || PAYMENT_METHODS.includes(value));
-  const filter = valid ? { filter: { by: option.key, value } } : {};
+  const size = Number(input.size);
+  const pageSize = (PAGE_SIZE_OPTIONS as readonly number[]).includes(size) ? size : PAGE_SIZE;
+  const filter = { pageSize, ...(valid ? { filter: { by: option.key, value } } : {}) };
   if (input.preset === "month") return { type, preset: "month", from: monthStartIsoDate(), to: today, ...filter };
   if (input.preset === "year") return { type, preset: "year", from: yearStartIsoDate(), to: today, ...filter };
   if (input.preset === "custom" && input.from && input.to) return { type, preset: "custom", from: input.from, to: input.to, ...filter };
@@ -158,11 +170,11 @@ export async function listReportExpenses(range: ReportRange, page: number) {
       where,
       include: expenseInclude,
       orderBy: [{ expenseDate: "asc" }, { voucherNumber: "asc" }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (page - 1) * range.pageSize,
+      take: range.pageSize,
     }),
   ]);
-  return { items, total, page, pageSize: PAGE_SIZE, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+  return { items, total, page, pageSize: range.pageSize, pageCount: Math.max(1, Math.ceil(total / range.pageSize)) };
 }
 
 /** Full expense list for the range (for export), optionally including cancelled rows. */
@@ -183,11 +195,11 @@ export async function listReportTransactions(range: ReportRange, page: number) {
       where,
       include: donationInclude,
       orderBy: [{ donationDate: "asc" }, { receiptNumber: "asc" }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      skip: (page - 1) * range.pageSize,
+      take: range.pageSize,
     }),
   ]);
-  return { items, total, page, pageSize: PAGE_SIZE, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+  return { items, total, page, pageSize: range.pageSize, pageCount: Math.max(1, Math.ceil(total / range.pageSize)) };
 }
 
 /** Full transaction list for the range, including cancelled rows flagged by status. */

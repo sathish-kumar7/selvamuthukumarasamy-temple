@@ -5,6 +5,7 @@ import { can } from "@/lib/auth/permissions";
 import { getAllCategories, listDonations } from "@/lib/donations/service";
 import { donationFiltersSchema, type DonationFilters } from "@/lib/validation/donation";
 import { isValidIsoDate } from "@/lib/dates";
+import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
@@ -26,7 +27,7 @@ function parseFilters(searchParams: Record<string, string | string[] | undefined
   return filters;
 }
 
-function buildHref(filters: DonationFilters, page: number): string {
+function buildHref(filters: DonationFilters, page: number, size = filters.size): string {
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
   if (filters.from) params.set("from", filters.from);
@@ -34,6 +35,7 @@ function buildHref(filters: DonationFilters, page: number): string {
   if (filters.paymentMethod) params.set("paymentMethod", filters.paymentMethod);
   if (filters.categoryId) params.set("categoryId", filters.categoryId);
   if (filters.status !== "ALL") params.set("status", filters.status);
+  if (size !== PAGE_SIZE) params.set("size", String(size));
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
   return qs ? `/donations?${qs}` : "/donations";
@@ -64,6 +66,8 @@ export default async function DonationsPage(props: PageProps<"/donations">) {
           total={result.total}
           pageSize={result.pageSize}
           buildHref={(page) => buildHref(filters, page)}
+          pageSizes={PAGE_SIZE_OPTIONS}
+          buildSizeHref={(size) => buildHref(filters, 1, size)}
         />
       </div>
     </>

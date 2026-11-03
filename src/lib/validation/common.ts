@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidIsoDate } from "@/lib/dates";
 import { parseAmountInput } from "@/lib/money";
+import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from "@/lib/constants";
 
 export type FieldErrors = Record<string, string>;
 
@@ -99,3 +100,9 @@ export function formDataToObject(formData: FormData): Record<string, string> {
   }
   return out;
 }
+
+/** Rows-per-page URL param. Unknown sizes fall back to the default instead of failing the whole filter parse. */
+export const pageSize = z.coerce
+  .number()
+  .optional()
+  .transform((v) => ((PAGE_SIZE_OPTIONS as readonly number[]).includes(v ?? NaN) ? (v as number) : PAGE_SIZE));

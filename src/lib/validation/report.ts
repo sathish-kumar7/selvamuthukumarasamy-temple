@@ -10,6 +10,7 @@ export const reportRangeSchema = z
     to: isoDate.optional(),
     by: z.enum(REPORT_FILTER_KEYS).optional().or(z.literal("").transform(() => undefined)),
     value: z.string().trim().max(120).optional().transform((v) => v || undefined),
+    size: z.coerce.number().int().optional(),
     page: z.coerce.number().int().min(1).optional().default(1),
   })
   .refine((v) => v.preset !== "custom" || (v.from && v.to && v.from <= v.to), {
