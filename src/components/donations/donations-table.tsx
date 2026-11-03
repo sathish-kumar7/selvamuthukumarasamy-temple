@@ -68,6 +68,7 @@ function DonationCards({ donations, canEdit }: { donations: DonationWithRelation
                 <p className="mt-0.5 truncate text-base font-medium text-stone-900">{d.donor.name}</p>
                 <p className="text-xs text-stone-500">
                   {d.donor.mobile} · {formatDonationDate(d.donationDate)}
+                  {d.manualReceiptNumber ? ` · Manual: ${d.manualReceiptNumber}` : ""}
                 </p>
               </div>
               <p className={cn("shrink-0 text-lg font-semibold tabular-nums", cancelled ? "text-stone-400 line-through" : "text-stone-900")}>
@@ -109,6 +110,7 @@ export function DonationsTable({ donations, canEdit, compact = false, emptyTitle
         <thead>
           <tr>
             <Th>Receipt</Th>
+            <Th className="hidden lg:table-cell">Manual no.</Th>
             <Th>Date</Th>
             <Th>Donor</Th>
             <Th className="hidden 2xl:table-cell">Mobile</Th>
@@ -134,6 +136,7 @@ export function DonationsTable({ donations, canEdit, compact = false, emptyTitle
                     </div>
                   ) : null}
                 </Td>
+                <Td className="hidden whitespace-nowrap font-mono text-sm text-stone-600 lg:table-cell">{d.manualReceiptNumber ?? "—"}</Td>
                 <Td className="whitespace-nowrap">{formatDonationDate(d.donationDate)}</Td>
                 <Td>
                   <span className="block max-w-[14rem] truncate font-medium">{d.donor.name}</span>

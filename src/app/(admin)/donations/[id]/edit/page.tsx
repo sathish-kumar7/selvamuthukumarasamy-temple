@@ -49,6 +49,7 @@ export default async function EditDonationPage(props: PageProps<"/donations/[id]
           paymentMethod: donation.paymentMethod,
           transactionReference: donation.transactionReference ?? "",
           donationDate: utcDateToIso(donation.donationDate),
+          manualReceiptNumber: donation.manualReceiptNumber ?? "",
           notes: donation.notes ?? "",
         }}
       />

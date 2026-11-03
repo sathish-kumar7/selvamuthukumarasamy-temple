@@ -17,6 +17,7 @@ export interface ReportExporter<Row = DonationWithRelations> {
 
 const COLUMNS = [
   "Receipt Number",
+  "Manual Receipt No.",
   "Donation Date",
   "Donor Name",
   "Mobile",
@@ -42,6 +43,7 @@ export const csvExporter: ReportExporter = {
       COLUMNS,
       rows.map((d) => [
         d.receiptNumber,
+        d.manualReceiptNumber,
         formatDonationDate(d.donationDate),
         d.donor.name,
         d.donor.mobile,

@@ -14,6 +14,7 @@ export const donationSchema = z.object({
   paymentMethod: z.enum(paymentMethodValues, { message: "Select a payment method" }),
   transactionReference: optionalTrimmed(100),
   donationDate: isoDate,
+  manualReceiptNumber: optionalTrimmed(50),
   notes: optionalTrimmed(1000),
 });
 

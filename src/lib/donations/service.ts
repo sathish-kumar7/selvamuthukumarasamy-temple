@@ -92,6 +92,7 @@ export async function createDonation(input: DonationInput, actor: Actor) {
         paymentMethod: input.paymentMethod,
         transactionReference: input.transactionReference ?? null,
         donationDate: isoDateToUtcDate(input.donationDate),
+        manualReceiptNumber: input.manualReceiptNumber ?? null,
         notes: input.notes ?? null,
         publicReceiptToken: generateReceiptToken(),
         createdById: actor.id,
@@ -107,6 +108,7 @@ export async function createDonation(input: DonationInput, actor: Actor) {
         ipAddress: actor.ip,
         details: {
           receiptNumber,
+          manualReceiptNumber: input.manualReceiptNumber ?? null,
           amount: input.amount,
           paymentMethod: input.paymentMethod,
           donorName: input.donorName,
@@ -164,6 +166,7 @@ export async function updateDonation(donationId: string, input: DonationInput, a
       paymentMethod: existing.paymentMethod,
       transactionReference: existing.transactionReference,
       donationDate: existing.donationDate,
+      manualReceiptNumber: existing.manualReceiptNumber,
       notes: existing.notes,
     };
     const after = {
@@ -173,6 +176,7 @@ export async function updateDonation(donationId: string, input: DonationInput, a
       paymentMethod: input.paymentMethod,
       transactionReference: input.transactionReference ?? null,
       donationDate: isoDateToUtcDate(input.donationDate),
+      manualReceiptNumber: input.manualReceiptNumber ?? null,
       notes: input.notes ?? null,
     };
 
@@ -185,6 +189,7 @@ export async function updateDonation(donationId: string, input: DonationInput, a
         paymentMethod: after.paymentMethod,
         transactionReference: after.transactionReference,
         donationDate: after.donationDate,
+        manualReceiptNumber: after.manualReceiptNumber,
         notes: after.notes,
         updatedById: actor.id,
       },
@@ -256,6 +261,7 @@ export function buildDonationWhere(filters: DonationFilters): Prisma.DonationWhe
     const digits = q.replace(/\D/g, "");
     where.OR = [
       { receiptNumber: { contains: q, mode: "insensitive" } },
+      { manualReceiptNumber: { contains: q, mode: "insensitive" } },
       { donor: { name: { contains: q, mode: "insensitive" } } },
       ...(digits.length >= 4 ? [{ donor: { mobile: { contains: digits } } }] : []),
     ];

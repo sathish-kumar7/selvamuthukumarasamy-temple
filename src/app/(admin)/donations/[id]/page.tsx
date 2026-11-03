@@ -83,6 +83,7 @@ export default async function DonationDetailPage(props: PageProps<"/donations/[i
           <CardHeader title="Internal details" description="Visible to temple staff only. Not printed on the receipt." />
           <CardBody>
             <dl className="grid gap-4 text-sm sm:grid-cols-2">
+              <Item label="Manual receipt no." value={donation.manualReceiptNumber ?? "—"} />
               <Item label="Donor email" value={donation.donor.email ?? "—"} />
               <Item label="Donor address" value={donation.donor.address ?? "—"} />
               <Item label="Notes" value={donation.notes ?? "—"} className="sm:col-span-2" />
